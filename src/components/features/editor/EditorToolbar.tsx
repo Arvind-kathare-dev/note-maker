@@ -100,7 +100,7 @@ function Dropdown({ label, children, className, icon: Icon }: { label?: React.Re
       {open && mounted && createPortal(
         <div 
           ref={portalRef}
-          className="fixed z-[9999] bg-card border border-border rounded-xl shadow-2xl min-w-[200px] p-1 overflow-hidden pointer-events-auto"
+          className="fixed z-9999 bg-card border border-border rounded-xl shadow-2xl min-w-[200px] p-1 overflow-hidden pointer-events-auto"
           style={{ top: coords.top, left: coords.left }}
         >
           {children}

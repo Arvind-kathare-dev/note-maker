@@ -255,6 +255,15 @@ export default function DocumentPage() {
           case 'blockquote': return `<blockquote>${inner}</blockquote>`;
           case 'codeBlock': return `<pre><code>${toText(node)}</code></pre>`;
           case 'horizontalRule': return '<hr/>';
+          case 'image':
+            const src = node.attrs?.src || '';
+            const alt = node.attrs?.alt || '';
+            const title = node.attrs?.title || '';
+            return `<img src="${src}" alt="${alt}" title="${title}" style="max-width: 100%; height: auto; display: block; margin: 12pt 0; border-radius: 4px;" />`;
+          case 'table': return `<table style="width: 100%; border-collapse: collapse; margin: 12pt 0;">${inner}</table>`;
+          case 'tableRow': return `<tr>${inner}</tr>`;
+          case 'tableHeader': return `<th style="border: 1px solid #ccc; padding: 8pt; background: #f4f4f4; text-align: left;">${inner}</th>`;
+          case 'tableCell': return `<td style="border: 1px solid #ccc; padding: 8pt;">${inner}</td>`;
           case 'text': {
             let t = node.text || '';
             (node.marks || []).forEach((m: any) => {
@@ -263,6 +272,7 @@ export default function DocumentPage() {
               if (m.type === 'underline') t = `<u>${t}</u>`;
               if (m.type === 'strike') t = `<s>${t}</s>`;
               if (m.type === 'code') t = `<code>${t}</code>`;
+              if (m.type === 'link') t = `<a href="${m.attrs?.href || ''}" target="_blank" style="color: #3b82f6; text-decoration: underline;">${t}</a>`;
             });
             return t;
           }
@@ -301,9 +311,15 @@ export default function DocumentPage() {
         ${doc.authorName} &nbsp;·&nbsp; ${new Date(doc.updatedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })} &nbsp;·&nbsp; v${doc.version} &nbsp;·&nbsp; ${doc.wordCount} words
       </div>
       ${bodyContent}
+      <script>
+        window.onload = () => {
+          setTimeout(() => {
+            window.print();
+          }, 100);
+        };
+      </script>
     </body></html>`);
     win.document.close();
-    setTimeout(() => { win.print(); }, 300);
   };
 
   const statusMeta = STATUS_OPTIONS.find(s => s.value === doc.status) || STATUS_OPTIONS[0];
