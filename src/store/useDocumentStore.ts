@@ -45,6 +45,7 @@ interface DocumentStore {
   updateDocument: (id: string, updates: Partial<Doc>) => void;
   deleteDocument: (id: string) => void;
   setActiveDoc: (id: string | null) => void;
+  togglePin: (id: string) => void;
   toggleFavorite: (id: string) => void;
   getOrCreateCategoryFolder: (category: 'workflow' | 'note' | 'developer' | 'client', projectId?: string | null) => string;
 }
