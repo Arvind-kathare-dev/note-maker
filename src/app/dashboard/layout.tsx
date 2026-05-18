@@ -13,10 +13,52 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useZenStore } from '@/store/useZenStore';
+import { useEffect } from 'react';
+import axios from 'axios';
+import { useProjectStore } from '@/store/useProjectStore';
+import { useDocumentStore } from '@/store/useDocumentStore';
+import { useRouter } from 'next/navigation';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user } = useAuthStore();
+  const { user, logout, isAuthenticated } = useAuthStore();
   const { isZenMode } = useZenStore();
+  const { fetchProjects } = useProjectStore();
+  const { fetchFolders, fetchDocuments } = useDocumentStore();
+  const router = useRouter();
+
+  useEffect(() => {
+    // Read directly from localStorage to prevent Next.js/Zustand hydration lag redirecting the user
+    const savedAuth = typeof window !== 'undefined' ? localStorage.getItem('nexus-auth') : null;
+    let hasAuth = false;
+    if (savedAuth) {
+      try {
+        const parsed = JSON.parse(savedAuth);
+        if (parsed.state?.isAuthenticated && parsed.state?.user) {
+          hasAuth = true;
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    if (!isAuthenticated && !hasAuth) {
+      router.replace('/login');
+      return;
+    }
+
+    const initializeDatabaseAndStores = async () => {
+      try {
+        // Load live MongoDB entries directly into Zustand stores
+        await fetchProjects();
+        await fetchFolders();
+        await fetchDocuments();
+      } catch (error) {
+        console.error('Failed to initialize database stores:', error);
+      }
+    };
+
+    initializeDatabaseAndStores();
+  }, [isAuthenticated, router]);
 
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
@@ -55,10 +97,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <DropdownMenuContent align="end" className="w-56 bg-card border-border">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator className="bg-border" />
-                  <DropdownMenuItem className="cursor-pointer">Profile</DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer">Settings</DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => router.push('/dashboard/settings')} 
+                    className="cursor-pointer"
+                  >
+                    Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => router.push('/dashboard/settings')} 
+                    className="cursor-pointer"
+                  >
+                    Settings
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-border" />
-                  <DropdownMenuItem className="cursor-pointer text-rose-500 focus:text-rose-600 focus:bg-rose-500/10">Logout</DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => {
+                      logout();
+                    }} 
+                    className="cursor-pointer text-rose-500 focus:text-rose-600 focus:bg-rose-500/10"
+                  >
+                    Logout
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>

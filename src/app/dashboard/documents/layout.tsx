@@ -2,7 +2,7 @@
 
 export default function DocumentsLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-col flex-1 w-full bg-background min-h-full">
+    <div className="flex-1 flex flex-col min-h-full overflow-hidden bg-[#030712]">
       {children}
     </div>
   );

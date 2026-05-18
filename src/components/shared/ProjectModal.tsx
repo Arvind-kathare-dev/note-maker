@@ -1,0 +1,319 @@
+'use client';
+
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { 
+  X, Plus, Trash2, ChevronDown, GraduationCap, ShieldAlert, 
+  Backpack, Code2, Briefcase, Users2, BookOpen 
+} from 'lucide-react';
+import { useProjectStore, Project } from '@/store/useProjectStore';
+import { useDocumentStore } from '@/store/useDocumentStore';
+import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+
+const PROJECT_ICONS = ['🌱', '🚀', '🛒', '⚡', '📦', '🏕️', '🎯', '🔥', '💡', '🛠️', '📊', '🎨', '🔬'];
+const PROJECT_COLORS = [
+  '#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+  '#06b6d4', '#ec4899', '#14b8a6', '#f97316', '#84cc16',
+];
+
+interface ProjectModalProps {
+  project?: Project;
+  onClose: () => void;
+}
+
+export default function ProjectModal({ project, onClose }: ProjectModalProps) {
+  const router = useRouter();
+  const { createProject, updateProject, setActiveProject } = useProjectStore();
+  const { createDocument, setActiveDoc } = useDocumentStore();
+  
+  const [name, setName] = useState(project?.name || '');
+  const [description, setDescription] = useState(project?.description || '');
+  const [icon, setIcon] = useState(project?.icon || '🌱');
+  const [color, setColor] = useState(project?.color || '#6366f1');
+  const [category, setCategory] = useState(project?.category || 'School Based');
+  
+  const [customSections, setCustomSections] = useState<Array<{ id: string; label: string; icon: string }>>(() => {
+    if (project?.sections && project.sections.length > 0) {
+      return project.sections.map(s => ({
+        id: s.id,
+        label: s.label,
+        icon: s.icon || 'BookOpen'
+      }));
+    }
+    return [
+      { id: `sec_${Math.random().toString(36).slice(2, 7)}`, label: 'New Custom Section', icon: 'BookOpen' }
+    ];
+  });
+
+  const handleAddCustomSection = () => {
+    const newId = `sec_${Math.random().toString(36).slice(2, 7)}`;
+    setCustomSections(prev => [...prev, { id: newId, label: 'New Custom Section', icon: 'BookOpen' }]);
+  };
+
+  const handleRemoveCustomSection = (id: string) => {
+    setCustomSections(prev => prev.filter(s => s.id !== id));
+  };
+
+  const handleUpdateSectionLabel = (id: string, label: string) => {
+    setCustomSections(prev => prev.map(s => s.id === id ? { ...s, label } : s));
+  };
+
+  const handleUpdateSectionIcon = (id: string, icon: string) => {
+    setCustomSections(prev => prev.map(s => s.id === id ? { ...s, icon } : s));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+
+    const formattedSections = customSections.map(s => ({
+      id: s.id,
+      label: s.label.trim(),
+      icon: s.icon
+    }));
+
+    try {
+      if (project) {
+        await updateProject(project.id, { 
+          name: name.trim(), 
+          description: description.trim(), 
+          icon, 
+          color, 
+          category, 
+          sections: formattedSections 
+        });
+      } else {
+        const proj = await createProject({ 
+          name: name.trim(), 
+          description: description.trim(), 
+          icon, 
+          color, 
+          category, 
+          version: 'v1.0.0',
+          sections: formattedSections 
+        });
+
+        // Auto-select and spawn the first document of the first section
+        setActiveProject(proj.id);
+        const firstSecId = formattedSections[0]?.id || 'teacher';
+        const firstDoc = await createDocument(null, null, proj.id, firstSecId);
+        setActiveDoc(firstDoc.id);
+        router.push(`/dashboard/documents/${firstDoc.id}`);
+      }
+      onClose();
+    } catch (err) {
+      console.error('Failed to save project:', err);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-2000 flex items-center justify-center p-4 select-none animate-in fade-in duration-200">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" onClick={onClose} />
+      <div className="relative w-full max-w-md bg-card border border-border shadow-2xl rounded-3xl overflow-hidden text-foreground">
+        
+        {/* Header */}
+        <div className="p-6 border-b border-border flex items-center justify-between">
+          <div className="space-y-0.5 text-left">
+            <h2 className="text-lg font-black font-outfit uppercase tracking-wider text-foreground">
+              {project ? 'Edit Workspace' : 'New Project Workspace'}
+            </h2>
+            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">
+              {project ? 'Modify your workspace parameters' : 'Create a customized tenant documentation pool'}
+            </p>
+          </div>
+          <button 
+            onClick={onClose} 
+            className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Scrollable Form Area */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-5 max-h-[75vh] overflow-y-auto scrollbar-thin text-left">
+          
+          {/* Custom Visual Customization block */}
+          <div className="grid grid-cols-2 gap-4">
+            
+            {/* Icon Picker Grid */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block">Icon</label>
+              <div className="grid grid-cols-4 gap-1 p-2 bg-background border border-border rounded-xl">
+                {PROJECT_ICONS.slice(0, 12).map(i => (
+                  <button
+                    key={i} 
+                    type="button"
+                    onClick={() => setIcon(i)}
+                    className={cn(
+                      'w-7 h-7 text-base rounded-lg flex items-center justify-center transition-all cursor-pointer select-none', 
+                      icon === i ? 'bg-primary/20 ring-2 ring-primary' : 'hover:bg-accent'
+                    )}
+                  >
+                    {i}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Color Picker Grid */}
+            <div className="space-y-1.5 flex flex-col justify-between">
+              <div>
+                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block mb-1.5">Color</label>
+                <div className="grid grid-cols-5 gap-1 p-2 bg-background border border-border rounded-xl">
+                  {PROJECT_COLORS.map(c => (
+                    <button
+                      key={c} 
+                      type="button"
+                      onClick={() => setColor(c)}
+                      className={cn(
+                        'w-5.5 h-5.5 rounded-md transition-all cursor-pointer', 
+                        color === c ? 'ring-2 ring-offset-2 ring-offset-background ring-primary scale-110' : 'hover:scale-105'
+                      )}
+                      style={{ backgroundColor: c }}
+                    />
+                  ))}
+                </div>
+              </div>
+              
+              {/* Preview Bubble */}
+              <div className="flex items-center gap-2 p-2 bg-background border border-border rounded-xl">
+                <div 
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-sm shrink-0 select-none" 
+                  style={{ backgroundColor: color + '25' }}
+                >
+                  {icon}
+                </div>
+                <span className="text-[11px] font-bold text-foreground truncate max-w-[80px]">{name || 'Project Name'}</span>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Project Details */}
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block">Project Name *</label>
+            <Input 
+              value={name} 
+              onChange={e => setName(e.target.value)} 
+              placeholder="e.g. Little Seeds" 
+              className="h-11 bg-background border-border focus:border-primary/50 text-foreground font-bold rounded-xl" 
+              required 
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block">Description</label>
+            <Input 
+              value={description} 
+              onChange={e => setDescription(e.target.value)} 
+              placeholder="Brief summary of project manuals..." 
+              className="h-11 bg-background border-border focus:border-primary/50 text-foreground font-bold rounded-xl" 
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block">Project Category / Workspace Type</label>
+            <select
+              value={category}
+              onChange={e => setCategory(e.target.value)}
+              className="w-full h-11 bg-background border border-border focus:border-primary/50 rounded-xl px-4 text-xs font-bold text-foreground focus:outline-none cursor-pointer"
+            >
+              {[
+                'School Based', 'Tech Based', 'E-Commerce', 'Real Estate', 
+                'Healthcare', 'SaaS Platform', 'Fintech', 'Social Media', 
+                'Fitness & Gym', 'Landing Page', 'Logistics & Supply', 'Other / Custom'
+              ].map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Dynamic Project Sections Editor */}
+          <div className="space-y-3 p-4 bg-accent/20 border border-border rounded-2xl max-h-[220px] overflow-y-auto scrollbar-thin">
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Workspace Custom Sections</span>
+              <button
+                type="button"
+                onClick={handleAddCustomSection}
+                className="text-[9px] font-black uppercase tracking-wider text-primary hover:text-primary/80 transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <Plus className="w-2.5 h-2.5" /> Add Section
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              {customSections.map((section, idx) => (
+                <div key={section.id} className="flex items-center gap-3 bg-card border border-border p-3 rounded-2xl hover:border-primary/40 hover:shadow-lg transition-all group/item">
+                  <div className="relative shrink-0">
+                    <select
+                      value={section.icon}
+                      onChange={e => handleUpdateSectionIcon(section.id, e.target.value)}
+                      className="appearance-none bg-background border border-border hover:border-border/80 focus:border-primary/50 rounded-xl pl-3 pr-6 py-2 text-sm focus:outline-none cursor-pointer w-14 transition-all text-center"
+                    >
+                      {[
+                        { emoji: 'GraduationCap', label: '🎓' },
+                        { emoji: 'ShieldAlert', label: '🛡️' },
+                        { emoji: 'Backpack', label: '🎒' },
+                        { emoji: 'Code2', label: '💻' },
+                        { emoji: 'Briefcase', label: '💼' },
+                        { emoji: 'Users2', label: '👥' },
+                        { emoji: 'BookOpen', label: '📝' }
+                      ].map(opt => (
+                        <option key={opt.emoji} value={opt.emoji}>{opt.label}</option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-1.5 flex items-center text-muted-foreground">
+                      <ChevronDown className="w-3 h-3" />
+                    </div>
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <input
+                      type="text"
+                      required
+                      value={section.label}
+                      onChange={e => handleUpdateSectionLabel(section.id, e.target.value)}
+                      placeholder={`Section ${idx + 1} name...`}
+                      className="w-full bg-background border border-border hover:border-border/80 focus:border-primary/45 focus:bg-background rounded-xl px-3 py-2 text-xs font-bold text-foreground focus:outline-none transition-all placeholder:text-muted-foreground/45"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveCustomSection(section.id)}
+                    className="p-2 bg-rose-500/5 hover:bg-rose-500/10 rounded-xl text-rose-400 hover:text-rose-300 transition-colors shrink-0 cursor-pointer"
+                    title="Remove custom section"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+              {customSections.length === 0 && (
+                <p className="text-[10px] text-muted-foreground italic text-center py-4 select-none">No custom sections. Click Add Section above.</p>
+              )}
+            </div>
+          </div>
+
+          {/* Form Actions */}
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 h-11 rounded-xl border border-border text-xs font-bold hover:bg-accent transition-all cursor-pointer text-center"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 h-11 bg-primary text-primary-foreground hover:bg-primary/95 rounded-xl text-xs font-black uppercase tracking-wider shadow-lg shadow-primary/10 transition-all cursor-pointer text-center"
+            >
+              {project ? 'Save Changes' : 'Create Workspace'}
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  );
+}

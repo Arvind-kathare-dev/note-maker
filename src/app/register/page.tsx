@@ -1,240 +1,236 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Layout, ArrowRight, Globe, Check, User, Mail, Building2, Link2, Sparkles } from 'lucide-react';
+import { ShieldCheck, Mail, Lock, User, Eye, EyeOff, ArrowRight, AlertCircle, X } from 'lucide-react';
+import { useAuthStore } from '@/store/useAuthStore';
 import { cn } from '@/lib/utils';
-
-const STEPS = [
-  { id: 1, title: 'Your details', desc: 'Name and email to get started.' },
-  { id: 2, title: 'Workspace', desc: 'Name your organization.' },
-];
+import { AnimatePresence, motion } from 'framer-motion';
 
 export default function RegisterPage() {
-  const router = useRouter();
-  const [step, setStep] = useState(1);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [focused, setFocused] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: '', email: '', org: '', slug: '' });
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  
+  const { register, isLoading, isAuthenticated } = useAuthStore();
+  const router = useRouter();
 
-  const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+  useEffect(() => {
+    const savedAuth = typeof window !== 'undefined' ? localStorage.getItem('nexus-auth') : null;
+    let hasAuth = false;
+    if (savedAuth) {
+      try {
+        const parsed = JSON.parse(savedAuth);
+        if (parsed.state?.isAuthenticated && parsed.state?.user) {
+          hasAuth = true;
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
 
-  const handleSubmit = (e: React.FormEvent) => {
+    if (isAuthenticated || hasAuth) {
+      router.replace('/dashboard');
+    }
+  }, [isAuthenticated, router]);
+
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (step === 1) { setStep(2); return; }
-    router.push('/dashboard');
+    if (!name || !email || !password) return;
+    
+    try {
+      await register(name, email);
+      router.push('/dashboard');
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.response?.data?.error || err.message || 'Registration failed';
+      setToastMessage(msg);
+      setTimeout(() => {
+        setToastMessage(null);
+      }, 5000);
+    }
   };
 
-  const inputClass = (key: string) => cn(
-    'flex items-center gap-3 h-12 px-4 rounded-xl border bg-accent/30 transition-all',
-    focused === key ? 'border-primary ring-3 ring-primary/15' : 'border-border'
-  );
-
   return (
-    <div className="min-h-screen flex bg-background">
-      {/* ── Left panel ──────────────────────────────── */}
-      <div className="hidden lg:flex lg:w-1/2 xl:w-[45%] relative flex-col items-center justify-center p-16 overflow-hidden">
-        <div className="absolute inset-0 bg-linear-to-br from-primary/20 via-background to-background" />
-        <div className="absolute top-[-15%] left-[-15%] w-[55%] h-[55%] bg-primary/15 rounded-full blur-[100px]" />
-        <div className="absolute bottom-[-15%] right-[-15%] w-[50%] h-[50%] bg-purple-600/10 rounded-full blur-[100px]" />
-        <div className="absolute inset-0 opacity-[0.03]" style={{
-          backgroundImage: 'linear-gradient(rgba(255,255,255,.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.6) 1px, transparent 1px)',
-          backgroundSize: '40px 40px'
-        }} />
+    <div className="min-h-screen flex bg-[#030712] font-inter text-slate-300">
+      
+      {/* Left panel (Veloc Branding & Value Pillars) */}
+      <div className="hidden lg:flex lg:w-1/2 xl:w-[50%] relative flex-col items-center justify-center p-16 overflow-hidden border-r border-border/20">
+        <div className="absolute inset-0 bg-linear-to-br from-emerald-950/20 via-[#030712] to-[#030712]" />
+        <div className="absolute top-[-15%] left-[-15%] w-[55%] h-[55%] bg-emerald-500/10 rounded-full blur-[100px]" />
 
         <div className="relative z-10 max-w-md text-center space-y-8">
           <div className="flex justify-center">
-            <div className="w-20 h-20 premium-gradient rounded-3xl flex items-center justify-center shadow-2xl shadow-primary/40">
-              <Layout className="w-10 h-10 text-white" />
+            <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/25 rounded-2xl flex items-center justify-center shadow-2xl shadow-emerald-500/10 font-outfit font-black text-3xl text-emerald-400">
+              V
             </div>
           </div>
 
-          <div>
-            <h1 className="text-5xl font-black tracking-tighter mb-3">Nexus Hub</h1>
-            <p className="text-muted-foreground text-lg font-medium leading-relaxed">
-              Start free, scale to enterprise. No credit card required.
+          <div className="space-y-2">
+            <h1 className="text-3xl font-extrabold tracking-wider text-slate-100 font-outfit uppercase">
+              Join Veloc
+            </h1>
+            <p className="text-slate-400 text-xs font-bold leading-relaxed max-w-xs mx-auto">
+              Create a free credentials account to read authorized folders or author manual workspaces.
             </p>
           </div>
 
-          {/* What you get */}
-          <div className="grid grid-cols-1 gap-2.5 text-left">
+          {/* Quick Pillars */}
+          <div className="grid grid-cols-1 gap-3 text-left">
             {[
-              'Unlimited documents & notes',
-              'Project workspaces with folder hierarchy',
-              'Rich-text editor with PDF export',
-              'Team sharing & collaboration',
-              'Dark / light mode + custom typography',
-            ].map(item => (
-              <div key={item} className="flex items-center gap-3 p-3 rounded-xl bg-card/40 border border-border/50">
-                <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
-                  <Check className="w-3 h-3 text-emerald-500" />
+              { emoji: '🛠️', title: 'Admin & Dev Creators', desc: 'Secure project workspace management for verified administrative team.' },
+              { emoji: '👀', title: 'Simple Client Reader Accounts', desc: 'Easily log in and read authorized documentation assigned specifically to you.' },
+            ].map(f => (
+              <div key={f.title} className="flex items-start gap-4 p-4 rounded-2xl bg-[#0b1220]/60 border border-border/30 backdrop-blur-xs">
+                <span className="text-xl shrink-0">{f.emoji}</span>
+                <div>
+                  <p className="text-[10px] font-black text-slate-200 uppercase tracking-wide">{f.title}</p>
+                  <p className="text-xs text-slate-400 mt-1 leading-relaxed font-medium">{f.desc}</p>
                 </div>
-                <span className="text-sm font-medium text-foreground">{item}</span>
               </div>
             ))}
           </div>
+
+          <p className="text-[9px] font-black uppercase tracking-widest text-slate-600">Veloc Portal Workspace v1.4</p>
         </div>
       </div>
 
-      {/* ── Right panel (form) ────────────────────────── */}
-      <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
-        <div className="w-full max-w-md space-y-8">
-          {/* Mobile logo */}
-          <div className="flex items-center gap-3 lg:hidden">
-            <div className="w-10 h-10 premium-gradient rounded-xl flex items-center justify-center shadow-lg shadow-primary/30">
-              <Layout className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-black text-2xl tracking-tighter">Nexus Hub</span>
+      {/* Right panel (Interactive Register Form) */}
+      <div className="flex-1 flex flex-col items-center justify-center p-6 lg:p-12 relative overflow-y-auto">
+        <div className="w-full max-w-md space-y-8 py-8">
+          
+          <div className="space-y-2 text-center lg:text-left">
+            <h2 className="text-2xl font-black text-slate-100 font-outfit uppercase tracking-wider">
+              Create Account
+            </h2>
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Register a new access account to enter the workspace.</p>
           </div>
-
-          {/* Step indicator */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              {STEPS.map((s, i) => (
-                <div key={s.id} className="flex items-center gap-3 flex-1">
-                  <div className={cn(
-                    'w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all shrink-0',
-                    step > s.id ? 'bg-emerald-500 text-white' :
-                    step === s.id ? 'bg-primary text-primary-foreground' :
-                    'bg-accent text-muted-foreground'
-                  )}>
-                    {step > s.id ? <Check className="w-4 h-4" /> : s.id}
-                  </div>
-                  {i < STEPS.length - 1 && (
-                    <div className={cn('flex-1 h-0.5 rounded-full transition-all', step > s.id ? 'bg-emerald-500' : 'bg-border')} />
-                  )}
-                </div>
-              ))}
-            </div>
-            <div>
-              <h2 className="text-3xl font-black tracking-tight">{STEPS[step - 1].title}</h2>
-              <p className="text-muted-foreground mt-1">{STEPS[step - 1].desc}</p>
-            </div>
-          </div>
-
-          {/* SSO (step 1 only) */}
-          {step === 1 && (
-            <>
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { icon: Globe, label: 'Google', color: 'text-blue-500' },
-                  { icon: Sparkles, label: 'GitHub', color: 'text-foreground' },
-                ].map(btn => {
-                  const Icon = btn.icon;
-                  return (
-                    <button key={btn.label} type="button"
-                      className="flex items-center justify-center gap-2.5 h-11 rounded-xl border border-border bg-card hover:bg-accent hover:border-primary/30 transition-all text-sm font-semibold"
-                    >
-                      <Icon className={cn('w-4 h-4', btn.color)} />
-                      {btn.label}
-                    </button>
-                  );
-                })}
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="flex-1 h-px bg-border" />
-                <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">or email</span>
-                <div className="flex-1 h-px bg-border" />
-              </div>
-            </>
-          )}
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {step === 1 ? (
-              <>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Full Name</label>
-                  <div className={inputClass('name')}>
-                    <User className="w-4 h-4 text-muted-foreground shrink-0" />
-                    <input
-                      value={form.name} onChange={e => set('name', e.target.value)}
-                      onFocus={() => setFocused('name')} onBlur={() => setFocused(null)}
-                      placeholder="Jane Doe"
-                      className="flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-muted-foreground/50"
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Work Email</label>
-                  <div className={inputClass('email')}>
-                    <Mail className="w-4 h-4 text-muted-foreground shrink-0" />
-                    <input
-                      type="email"
-                      value={form.email} onChange={e => set('email', e.target.value)}
-                      onFocus={() => setFocused('email')} onBlur={() => setFocused(null)}
-                      placeholder="jane@company.com"
-                      className="flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-muted-foreground/50"
-                      required
-                    />
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Organization Name</label>
-                  <div className={inputClass('org')}>
-                    <Building2 className="w-4 h-4 text-muted-foreground shrink-0" />
-                    <input
-                      value={form.org} onChange={e => set('org', e.target.value)}
-                      onFocus={() => setFocused('org')} onBlur={() => setFocused(null)}
-                      placeholder="Acme Corp"
-                      className="flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-muted-foreground/50"
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Workspace Slug</label>
-                  <div className={inputClass('slug')}>
-                    <Link2 className="w-4 h-4 text-muted-foreground shrink-0" />
-                    <input
-                      value={form.slug} onChange={e => set('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
-                      onFocus={() => setFocused('slug')} onBlur={() => setFocused(null)}
-                      placeholder="acme-corp"
-                      className="flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-muted-foreground/50 font-mono"
-                      required
-                    />
-                    <span className="text-xs text-muted-foreground font-mono shrink-0">.nexus.hub</span>
-                  </div>
-                </div>
-              </>
-            )}
-
-            <div className="flex gap-3 pt-1">
-              {step > 1 && (
-                <button
-                  type="button"
-                  onClick={() => setStep(s => s - 1)}
-                  className="flex-1 h-12 rounded-xl border border-border font-bold text-sm hover:bg-accent transition-all"
-                >
-                  Back
-                </button>
-              )}
-              <button
-                type="submit"
-                className={cn(
-                  'h-12 premium-gradient text-white font-bold rounded-xl flex items-center justify-center gap-2.5 shadow-lg shadow-primary/25 hover:opacity-90 active:scale-[0.98] transition-all',
-                  step > 1 ? 'flex-1' : 'w-full'
-                )}
-              >
-                {step < STEPS.length ? (
-                  <>Continue <ArrowRight className="w-4 h-4" /></>
-                ) : (
-                  <>Create Workspace <ArrowRight className="w-4 h-4" /></>
-                )}
-              </button>
+          <form onSubmit={handleRegisterSubmit} className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Full Name</label>
+              <div className={cn(
+                'flex items-center gap-3 h-12 px-4 rounded-xl border bg-slate-950 transition-all',
+                focused === 'name' ? 'border-emerald-500/50 ring-3 ring-emerald-500/10' : 'border-border/40'
+              )}>
+                <User className="w-4 h-4 text-slate-500 shrink-0" />
+                <input
+                  type="text"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  onFocus={() => setFocused('name')}
+                  onBlur={() => setFocused(null)}
+                  placeholder="Jane Doe"
+                  className="flex-1 bg-transparent text-xs font-bold outline-none placeholder:text-slate-600 text-slate-100"
+                  required
+                />
+              </div>
             </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Email Address</label>
+              <div className={cn(
+                'flex items-center gap-3 h-12 px-4 rounded-xl border bg-slate-950 transition-all',
+                focused === 'email' ? 'border-emerald-500/50 ring-3 ring-emerald-500/10' : 'border-border/40'
+              )}>
+                <Mail className="w-4 h-4 text-slate-500 shrink-0" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  onFocus={() => setFocused('email')}
+                  onBlur={() => setFocused(null)}
+                  placeholder="name@veloc.com"
+                  className="flex-1 bg-transparent text-xs font-bold outline-none placeholder:text-slate-600 text-slate-100"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Password</label>
+              <div className={cn(
+                'flex items-center gap-3 h-12 px-4 rounded-xl border bg-slate-950 transition-all',
+                focused === 'password' ? 'border-emerald-500/50 ring-3 ring-emerald-500/10' : 'border-border/40'
+              )}>
+                <Lock className="w-4 h-4 text-slate-500 shrink-0" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  onFocus={() => setFocused('password')}
+                  onBlur={() => setFocused(null)}
+                  className="flex-1 bg-transparent text-xs font-bold outline-none placeholder:text-slate-600 text-slate-100"
+                  required
+                />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-slate-500 hover:text-slate-300 transition-colors">
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full h-12 bg-emerald-500 text-[#030712] font-black text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2.5 shadow-lg shadow-emerald-500/10 hover:bg-emerald-600 transition-all disabled:opacity-60 disabled:cursor-not-allowed mt-4 cursor-pointer"
+            >
+              {isLoading ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-[#030712]/30 border-t-[#030712] rounded-full animate-spin" />
+                  Creating Workspace Access…
+                </>
+              ) : (
+                <>Register Account <ArrowRight className="w-4 h-4" /></>
+              )}
+            </button>
           </form>
 
-          <p className="text-center text-sm text-muted-foreground">
-            Already on Nexus?{' '}
-            <Link href="/login" className="font-bold text-primary hover:underline">Sign in</Link>
-          </p>
+          {/* Footer Security & Sign In redirect */}
+          <div className="space-y-4 pt-2">
+            <div className="flex items-center justify-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+              <span>Secure Cryptographic Access</span>
+            </div>
+            <p className="text-center text-xs font-bold text-slate-500 uppercase">
+              Already registered?{' '}
+              <Link href="/login" className="font-extrabold text-emerald-400 hover:underline">
+                Sign In
+              </Link>
+            </p>
+          </div>
+
         </div>
       </div>
+
+      {/* Toast Alert */}
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="fixed top-6 right-6 z-50 flex items-center gap-3 p-4 rounded-xl bg-emerald-950/80 border border-emerald-500/30 backdrop-blur-md shadow-2xl max-w-sm"
+          >
+            <AlertCircle className="w-5 h-5 text-emerald-400 shrink-0" />
+            <div className="flex-1 text-xs font-bold text-emerald-100">
+              {toastMessage}
+            </div>
+            <button
+              onClick={() => setToastMessage(null)}
+              className="text-emerald-400 hover:text-emerald-200 p-0.5 rounded-lg transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }

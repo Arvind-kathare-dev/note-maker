@@ -4,47 +4,57 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Plus, Search, FileText, FolderOpen, Folder, ChevronRight,
-  Star, Pin, MoreVertical, Trash2, Edit3, FolderPlus, X,
-  Workflow, BookOpen, Code2, Users2
+  Plus, Search, Star, Pin, MoreVertical, Trash2, Edit3, FolderPlus, X,
+  Code2, GraduationCap, ShieldAlert, Backpack, Eye, PenTool, ChevronDown, ChevronRight,
+  Briefcase, Users2, BookOpen, Settings
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDocumentStore, Doc, DocFolder } from '@/store/useDocumentStore';
-import { Button } from '@/components/ui/button';
+import { useProjectStore, getProjectSections } from '@/store/useProjectStore';
+import { useSimulatedProfileStore } from '@/store/useSimulatedProfileStore';
+import ProjectModal from '@/components/shared/ProjectModal';
+
+type ClientRole = string;
 
 export default function DocsSidebar({ onMobileClose }: { onMobileClose?: () => void }) {
   const router = useRouter();
+  
   const { 
     folders, documents, activeDocId, createDocument, createFolder, 
     deleteDocument, deleteFolder, setActiveDoc, togglePin, 
     toggleFavorite, updateDocument 
   } = useDocumentStore();
+  const { activeProjectId, projects } = useProjectStore();
+  const { getActiveProfile } = useSimulatedProfileStore();
 
+  const activeProject = projects.find(p => p.id === activeProjectId);
+  const activeProfile = getActiveProfile();
+
+  const [isReaderModeState, setIsReaderModeState] = useState(false);
   const [search, setSearch] = useState('');
-  const [openFolders, setOpenFolders] = useState<Set<string>>(new Set(['f1', 'f2', 'f3']));
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameVal, setRenameVal] = useState('');
-  const [newFolderMode, setNewFolderMode] = useState(false);
+  const [isEditProjectOpen, setIsEditProjectOpen] = useState(false);
+
+  // Lock client viewers strictly into Reader mode
+  const isReaderMode = !activeProfile.isWriter || isReaderModeState;
+  
+  // Track open/collapsed categories
+  const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
+
+  // Track folder creation modals per category
+  const [newFolderCategory, setNewFolderCategory] = useState<string | null>(null);
   const [newFolderName, setNewFolderName] = useState('');
 
-  const toggle = (id: string) => {
-    setOpenFolders(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
+  const toggleCategory = (role: string) => {
+    setCollapsedCategories(prev => ({
+      ...prev,
+      [role]: !prev[role]
+    }));
   };
 
-  const rootFolders = folders.filter(f => !f.parentId);
-  const unfiled = documents.filter(d => !d.folderId);
-  const pinned = documents.filter(d => d.isPinned);
-
-  const filtered = search
-    ? documents.filter(d => d.title.toLowerCase().includes(search.toLowerCase()))
-    : null;
-
-  const handleNewDoc = (folderId?: string) => {
-    const doc = createDocument(folderId);
+  const handleNewDoc = async (category: string, folderId?: string) => {
+    const doc = await createDocument(folderId || null, null, activeProjectId, category);
     router.push(`/dashboard/documents/${doc.id}`);
     onMobileClose?.();
   };
@@ -61,48 +71,108 @@ export default function DocsSidebar({ onMobileClose }: { onMobileClose?: () => v
     setRenamingId(null);
   };
 
-  const handleCreateFolder = () => {
+  const handleCreateFolder = async (category: ClientRole) => {
     if (newFolderName.trim()) {
-      createFolder(newFolderName.trim());
+      // Create folder inside this category's root folder
+      const parentId = `f_${category}_${activeProjectId}`;
+      await createFolder(newFolderName.trim(), parentId, activeProjectId);
       setNewFolderName('');
     }
-    setNewFolderMode(false);
+    setNewFolderCategory(null);
   };
 
+  // Filter documents by currently active project and respect reader mode status constraint
+  const projectDocs = documents.filter(d => 
+    d.projectId === activeProjectId && 
+    (isReaderMode ? d.status === 'published' : true)
+  );
+  const projectFolders = folders.filter(f => f.projectId === activeProjectId);
+
+  // Filter active project custom sections by active profile allowed lists (if restricted)
+  const customSections = getProjectSections(activeProject);
+  const allowedCategories = customSections
+    .filter(section => {
+      if (activeProfile.allowedCategories && activeProfile.allowedCategories.length > 0) {
+        return activeProfile.allowedCategories.includes(section.id as any);
+      }
+      return true;
+    })
+    .map(s => s.id);
+
+  const filteredDocs = search
+    ? projectDocs.filter(d => d.title.toLowerCase().includes(search.toLowerCase()) && allowedCategories.includes(d.category))
+    : null;
+
   return (
-    <div className="w-72 shrink-0 h-full border-r border-border bg-card flex flex-col">
-      {/* Header */}
+    <div className="w-80 shrink-0 h-full border-r border-border/60 bg-card/95 backdrop-blur-xl flex flex-col font-inter text-foreground">
+      
+      {/* Platform & Mode Toggle Header */}
       <div className="p-4 border-b border-border space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Explorer</h2>
-          <div className="flex items-center gap-1">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => setNewFolderMode(true)}
-              className="w-8 h-8 rounded-lg hover:bg-accent"
-            >
-              <FolderPlus className="w-4 h-4" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => handleNewDoc()}
-              className="w-8 h-8 rounded-lg hover:bg-primary/10 hover:text-primary"
-            >
-              <Plus className="w-4 h-4" />
-            </Button>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-lg shrink-0">{activeProject?.icon || '🌱'}</span>
+            <div className="flex flex-col min-w-0">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="font-extrabold text-xs tracking-wider uppercase text-foreground font-outfit truncate">
+                  {activeProject?.name || 'Project'} Docs
+                </span>
+                {activeProfile.isWriter && (
+                  <button
+                    onClick={() => setIsEditProjectOpen(true)}
+                    className="p-1 hover:bg-accent rounded-lg text-muted-foreground hover:text-foreground cursor-pointer transition-colors shrink-0"
+                    title="Edit Sections & Settings"
+                  >
+                    <Settings className="w-3 h-3 text-primary animate-pulse" />
+                  </button>
+                )}
+              </div>
+              <span className="text-[9px] text-primary font-black uppercase tracking-widest leading-none mt-0.5 select-none">
+                {activeProject?.category || 'School Based'}
+              </span>
+            </div>
           </div>
+          
+          {/* Reader vs Writer Toggle Switch (Only enabled for writers like Super Admin) */}
+          {activeProfile.isWriter ? (
+            <div className="flex items-center bg-accent rounded-xl p-0.5 border border-border select-none">
+              <button
+                onClick={() => setIsReaderModeState(true)}
+                className={cn(
+                  "flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer",
+                  isReaderModeState 
+                    ? "bg-primary/10 text-primary shadow-xs" 
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Eye className="w-2.5 h-2.5" /> Reader
+              </button>
+              <button
+                onClick={() => setIsReaderModeState(false)}
+                className={cn(
+                  "flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer",
+                  !isReaderModeState 
+                    ? "bg-primary/10 text-primary shadow-xs" 
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <PenTool className="w-2.5 h-2.5" /> Writer
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1 bg-primary/10 px-2 py-0.5 border border-primary/20 rounded-lg text-[10px] font-bold text-primary select-none">
+              <Eye className="w-2.5 h-2.5" /> Client Reader Only
+            </div>
+          )}
         </div>
-        
+
         {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Quick search..."
-            className="w-full bg-accent/50 border border-border rounded-xl pl-9 pr-8 py-2 text-xs font-medium placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+            placeholder={`Search ${activeProject?.name || 'manuals'}...`}
+            className="w-full bg-accent border border-border rounded-xl pl-9 pr-8 py-2 text-xs font-semibold placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 text-foreground transition-all"
           />
           {search && (
             <button 
@@ -115,175 +185,302 @@ export default function DocsSidebar({ onMobileClose }: { onMobileClose?: () => v
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto py-4 px-2 space-y-6 scrollbar-thin">
-        {/* Search results */}
-        {filtered ? (
+      {/* Explorer Tree */}
+      <div className="flex-1 overflow-y-auto py-5 px-4 space-y-6 scrollbar-thin">
+        {filteredDocs ? (
           <div className="space-y-1">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-3 mb-2">{filtered.length} matches</p>
-            {filtered.map(doc => (
+            <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-widest px-3 mb-2 select-none">
+              {filteredDocs.length} Matches Found
+            </p>
+            {filteredDocs.map(doc => (
               <DocItem 
                 key={doc.id} 
                 doc={doc} 
-                allDocs={documents} 
-                active={doc.id === activeDocId} 
+                allDocs={projectDocs.filter(d => d.category === doc.category)} 
                 onRename={startRename} 
                 renamingId={renamingId} 
                 renameVal={renameVal} 
                 setRenameVal={setRenameVal} 
                 commitRename={commitRename} 
                 level={0} 
+                isReaderMode={isReaderMode}
                 onMobileClose={onMobileClose} 
               />
             ))}
           </div>
         ) : (
           <>
-            {/* Pinned */}
-            {pinned.length > 0 && (
-              <div className="space-y-1">
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-3 mb-2">Pinned</p>
-                {pinned.map(doc => (
-                  <DocItem 
-                    key={doc.id} 
-                    doc={doc} 
-                    allDocs={documents} 
-                    active={doc.id === activeDocId} 
-                    onRename={startRename} 
-                    renamingId={renamingId} 
-                    renameVal={renameVal} 
-                    setRenameVal={setRenameVal} 
-                    commitRename={commitRename} 
-                    level={0} 
-                    onMobileClose={onMobileClose} 
-                  />
-                ))}
-              </div>
-            )}
-
-            {/* Folders */}
-            <div className="space-y-1">
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-3 mb-2">Folders</p>
-              {rootFolders.map(folder => (
-                <FolderSection
-                  key={folder.id}
-                  folder={folder}
-                  allDocs={documents}
-                  isOpen={openFolders.has(folder.id)}
-                  onToggle={() => toggle(folder.id)}
-                  activeDocId={activeDocId}
-                  onSelectDoc={(id) => { setActiveDoc(id); router.push(`/dashboard/documents/${id}`); onMobileClose?.(); }}
-                  onNewDoc={() => handleNewDoc(folder.id)}
-                  onDeleteFolder={() => deleteFolder(folder.id)}
-                  onRename={startRename}
-                  onDelete={deleteDocument}
-                  onPin={togglePin}
-                  onFav={toggleFavorite}
-                  onNewSubDoc={(parentDoc) => { const newDoc = createDocument(parentDoc.folderId, parentDoc.id, parentDoc.projectId); router.push(`/dashboard/documents/${newDoc.id}`); onMobileClose?.(); }}
-                  renamingId={renamingId} renameVal={renameVal} setRenameVal={setRenameVal} commitRename={commitRename}
-                  onMobileClose={onMobileClose}
-                />
-              ))}
-
-              {/* New folder input */}
-              {newFolderMode && (
-                <div className="px-3 py-1">
-                  <input
-                    autoFocus
-                    value={newFolderName}
-                    onChange={e => setNewFolderName(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') handleCreateFolder(); if (e.key === 'Escape') setNewFolderMode(false); }}
-                    onBlur={handleCreateFolder}
-                    placeholder="Folder name..."
-                    className="w-full bg-accent border border-primary/30 rounded-lg px-3 py-1.5 text-xs font-medium focus:outline-none"
-                  />
+            {allowedCategories.length === 0 && (
+              <div className="py-12 text-center px-4 border border-dashed border-border/20 rounded-2xl bg-accent/50 max-w-[280px] mx-auto space-y-4">
+                <BookOpen className="w-8 h-8 text-muted-foreground mx-auto" />
+                <div>
+                  <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">No sections created</p>
+                  <p className="text-[10px] text-muted-foreground italic mt-1 font-semibold leading-relaxed">
+                    This project does not have any custom document manuals configured yet.
+                  </p>
                 </div>
-              )}
-            </div>
-
-            {/* Unfiled */}
-            {unfiled.length > 0 && (
-              <div className="space-y-1">
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-3 mb-2">Other</p>
-                {unfiled.filter(d => !d.parentId).map(doc => (
-                  <DocItem 
-                    key={doc.id} 
-                    doc={doc} 
-                    allDocs={documents} 
-                    active={doc.id === activeDocId} 
-                    onRename={startRename} 
-                    renamingId={renamingId} 
-                    renameVal={renameVal} 
-                    setRenameVal={setRenameVal} 
-                    commitRename={commitRename} 
-                    level={0} 
-                    onMobileClose={onMobileClose} 
-                  />
-                ))}
+                {activeProfile.isWriter && (
+                  <button
+                    onClick={() => {
+                      setIsEditProjectOpen(true);
+                    }}
+                    className="mx-auto text-[9.5px] font-black uppercase tracking-wider text-primary hover:text-primary/80 transition-colors flex items-center gap-1.5 cursor-pointer bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-xl"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Configure Sections
+                  </button>
+                )}
               </div>
             )}
+            {allowedCategories.map(role => {
+              const section = customSections.find(s => s.id === role) || { id: role, label: role.toUpperCase(), icon: 'BookOpen' };
+              const Icon = section.icon === 'GraduationCap' ? GraduationCap
+                         : section.icon === 'ShieldAlert' ? ShieldAlert
+                         : section.icon === 'Backpack' ? Backpack
+                         : section.icon === 'Code2' ? Code2
+                         : section.icon === 'Briefcase' ? Briefcase
+                         : section.icon === 'Users2' ? Users2
+                         : BookOpen;
+
+              const iconColor = section.id === 'teacher' ? 'text-primary'
+                              : section.id === 'admin' ? 'text-purple-400'
+                              : section.id === 'student' ? 'text-amber-400'
+                              : section.id === 'developer' ? 'text-sky-400'
+                              : 'text-primary';
+
+              const meta = {
+                label: section.label,
+                icon: Icon,
+                color: iconColor
+              };
+
+              const isCollapsed = collapsedCategories[role] ?? false;
+
+              // Filter docs and folders belonging to this category and project
+              const catDocs = projectDocs.filter(d => d.category === role);
+              const catFolders = projectFolders.filter(f => {
+                if (f.id === `f_${role}_${activeProjectId}`) return true;
+                if (f.parentId === `f_${role}_${activeProjectId}`) return true;
+                if (f.name.toLowerCase().includes(role)) return true;
+                return catDocs.some(d => d.folderId === f.id);
+              });
+
+              const rootFolders = catFolders.filter(f => !f.parentId || f.id === `f_${role}_${activeProjectId}`);
+              const unfiled = catDocs.filter(d => !d.folderId);
+              const pinned = catDocs.filter(d => d.isPinned);
+
+              return (
+                <div key={role} className="space-y-2 border-b border-border/10 pb-4 last:border-0">
+                  
+                  {/* Category Title Header */}
+                  <div className="flex items-center justify-between px-2 py-1.5 group/cat">
+                    <button
+                      onClick={() => toggleCategory(role)}
+                      className="flex items-center gap-2 text-left cursor-pointer hover:text-foreground transition-colors"
+                    >
+                      {isCollapsed ? (
+                        <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+                      ) : (
+                        <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                      )}
+                      <Icon className={cn("w-4 h-4 shrink-0", meta.color)} />
+                      <span className="text-xs font-bold uppercase tracking-wider text-foreground font-outfit">
+                        {meta.label}
+                      </span>
+                      <span className="text-[9px] text-muted-foreground font-bold bg-accent px-1.5 py-0.5 rounded-full border border-border">
+                        {catDocs.length}
+                      </span>
+                    </button>
+
+                    {/* Writer Controls at Category Level */}
+                    {!isReaderMode && (
+                      <div className="flex items-center gap-1 opacity-0 group-hover/cat:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => handleNewDoc(role)}
+                          className="p-0.5 hover:bg-accent rounded text-primary transition-all cursor-pointer"
+                          title="Add Manual"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setNewFolderCategory(role)}
+                          className="p-0.5 hover:bg-accent rounded text-sky-400 transition-all cursor-pointer"
+                          title="Add Category Folder"
+                        >
+                          <FolderPlus className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Section Content */}
+                  <AnimatePresence initial={false}>
+                    {!isCollapsed && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden pl-4 space-y-3"
+                      >
+                        {/* Folder Creator */}
+                        {newFolderCategory === role && (
+                          <div className="px-2 py-1.5">
+                            <input
+                              autoFocus
+                              value={newFolderName}
+                              onChange={e => setNewFolderName(e.target.value)}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') handleCreateFolder(role);
+                                if (e.key === 'Escape') setNewFolderCategory(null);
+                              }}
+                              onBlur={() => handleCreateFolder(role)}
+                              placeholder="Folder name..."
+                              className="w-full bg-accent border border-border rounded-lg px-2.5 py-1 text-xs font-semibold focus:outline-none text-foreground"
+                            />
+                          </div>
+                        )}
+
+                        {/* Pinned Manuals */}
+                        {pinned.length > 0 && (
+                          <div className="space-y-0.5">
+                            <div className="flex items-center gap-1 px-3 py-1">
+                              <Pin className="w-2.5 h-2.5 text-amber-500 rotate-45" />
+                              <span className="text-[9px] font-extrabold text-muted-foreground uppercase tracking-widest">Pinned</span>
+                            </div>
+                            {pinned.map(doc => (
+                              <DocItem 
+                                key={`pinned_${doc.id}`} 
+                                doc={doc} 
+                                allDocs={catDocs} 
+                                onRename={startRename} 
+                                renamingId={renamingId} 
+                                renameVal={renameVal} 
+                                setRenameVal={setRenameVal} 
+                                commitRename={commitRename} 
+                                level={0} 
+                                isReaderMode={isReaderMode}
+                                onMobileClose={onMobileClose} 
+                              />
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Folders */}
+                        {rootFolders.map(folder => {
+                          const folderDocs = catDocs.filter(d => d.folderId === folder.id && !d.parentId);
+                          return (
+                            <div key={folder.id} className="space-y-0.5 mb-3">
+                              <div className="flex items-center justify-between px-3 py-1 group/header">
+                                <h4 className="text-[10px] font-extrabold text-muted-foreground select-none uppercase tracking-wider">
+                                  {folder.name}
+                                </h4>
+                                {!isReaderMode && (
+                                  <div className="flex items-center gap-1 opacity-0 group-hover/header:opacity-100 transition-opacity">
+                                    <button 
+                                      onClick={() => handleNewDoc(role, folder.id)}
+                                      className="p-0.5 hover:bg-accent rounded text-primary transition-all cursor-pointer"
+                                      title="Add manual"
+                                    >
+                                      <Plus className="w-3 h-3" />
+                                    </button>
+                                    {folder.id !== `f_${role}_${activeProjectId}` && (
+                                      <button 
+                                        onClick={() => deleteFolder(folder.id)}
+                                        className="p-0.5 hover:bg-rose-500/10 rounded text-rose-500 transition-all cursor-pointer"
+                                        title="Delete folder"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="space-y-0.5">
+                                {folderDocs.length === 0 ? (
+                                  <p className="text-[9px] text-muted-foreground/60 italic px-3 py-1 select-none">No manuals yet</p>
+                                ) : (
+                                  folderDocs.map(doc => (
+                                    <DocItem 
+                                      key={doc.id} 
+                                      doc={doc} 
+                                      allDocs={catDocs} 
+                                      onRename={startRename} 
+                                      renamingId={renamingId} 
+                                      renameVal={renameVal} 
+                                      setRenameVal={setRenameVal} 
+                                      commitRename={commitRename} 
+                                      level={0} 
+                                      isReaderMode={isReaderMode}
+                                      onMobileClose={onMobileClose} 
+                                    />
+                                  ))
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+
+                        {/* Unfiled Manuals */}
+                        {unfiled.length > 0 && (
+                          <div className="space-y-0.5">
+                            <div className="px-3 py-1">
+                              <span className="text-[9px] font-extrabold text-muted-foreground uppercase tracking-widest">Other Guides</span>
+                            </div>
+                            {unfiled.filter(d => !d.parentId).map(doc => (
+                              <DocItem 
+                                key={doc.id} 
+                                doc={doc} 
+                                allDocs={catDocs} 
+                                onRename={startRename} 
+                                renamingId={renamingId} 
+                                renameVal={renameVal} 
+                                setRenameVal={setRenameVal} 
+                                commitRename={commitRename} 
+                                level={0} 
+                                isReaderMode={isReaderMode}
+                                onMobileClose={onMobileClose} 
+                              />
+                            ))}
+                          </div>
+                        )}
+
+                        {catDocs.length === 0 && (
+                          <p className="text-[10px] text-muted-foreground italic px-3 py-1 select-none">
+                            No guidelines created yet.
+                          </p>
+                        )}
+
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
           </>
         )}
       </div>
+
+      {isEditProjectOpen && activeProject && (
+        <ProjectModal 
+          project={activeProject} 
+          onClose={() => setIsEditProjectOpen(false)} 
+        />
+      )}
     </div>
   );
 }
 
-function FolderSection({ folder, allDocs, isOpen, onToggle, activeDocId, onNewDoc, onDeleteFolder, onRename, renamingId, renameVal, setRenameVal, commitRename, onMobileClose }: {
-  folder: DocFolder; allDocs: Doc[]; isOpen: boolean; onToggle: () => void;
-  activeDocId: string | null; onSelectDoc: (id: string) => void; onNewDoc: () => void; onDeleteFolder: () => void;
-  onRename: (d: Doc) => void; onDelete: (id: string) => void; onPin: (id: string) => void; onFav: (id: string) => void; onNewSubDoc: (d: Doc) => void;
+function DocItem({ doc, allDocs, onRename, level = 0, renamingId, renameVal, setRenameVal, commitRename, onMobileClose, isReaderMode }: {
+  doc: Doc; allDocs: Doc[]; onRename: (d: Doc) => void; level?: number;
   renamingId: string | null; renameVal: string; setRenameVal: (v: string) => void; commitRename: () => void; onMobileClose?: () => void;
-}) {
-  const rootDocs = allDocs.filter(d => d.folderId === folder.id && !d.parentId);
-  
-  return (
-    <div className="space-y-0.5">
-      <div
-        className={cn(
-          "flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-accent cursor-pointer group transition-all",
-          isOpen && "bg-accent/30"
-        )}
-        onClick={onToggle}
-      >
-        <ChevronRight className={cn('w-4 h-4 text-muted-foreground transition-transform shrink-0', isOpen && 'rotate-90')} />
-        <span className="text-sm shrink-0">{folder.icon || '📁'}</span>
-        <span className="text-xs font-bold flex-1 truncate">{folder.name}</span>
-        <button 
-          onClick={(e) => { e.stopPropagation(); onNewDoc(); }} 
-          className="opacity-0 group-hover:opacity-100 p-1 hover:bg-background rounded-lg transition-all"
-        >
-          <Plus className="w-3.5 h-3.5 text-primary" />
-        </button>
-      </div>
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-            {rootDocs.length === 0 ? (
-              <p className="text-[10px] text-muted-foreground font-bold italic pl-12 py-2">Empty folder</p>
-            ) : rootDocs.map(doc => (
-              <DocItem 
-                key={doc.id} doc={doc} allDocs={allDocs} active={doc.id === activeDocId} 
-                onRename={onRename} renamingId={renamingId} renameVal={renameVal} 
-                setRenameVal={setRenameVal} commitRename={commitRename} level={1} 
-                onMobileClose={onMobileClose} 
-              />
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-function DocItem({ doc, allDocs, active, onRename, level = 0, renamingId, renameVal, setRenameVal, commitRename, onMobileClose }: {
-  doc: Doc; allDocs: Doc[]; active: boolean; onRename: (d: Doc) => void; level?: number;
-  renamingId: string | null; renameVal: string; setRenameVal: (v: string) => void; commitRename: () => void; onMobileClose?: () => void;
+  isReaderMode: boolean;
 }) {
   const router = useRouter();
-  const { activeDocId, setActiveDoc, deleteDocument, togglePin, toggleFavorite, createDocument } = useDocumentStore();
+  const { setActiveDoc, deleteDocument, togglePin, toggleFavorite, createDocument, activeDocId } = useDocumentStore();
   const [showMenu, setShowMenu] = useState(false);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const isRenaming = renamingId === doc.id;
+  const active = doc.id === activeDocId;
   
   const childDocs = allDocs.filter(d => d.parentId === doc.id);
   const hasChildren = childDocs.length > 0;
@@ -294,38 +491,41 @@ function DocItem({ doc, allDocs, active, onRename, level = 0, renamingId, rename
     onMobileClose?.();
   };
 
-  const handleNewSubDoc = () => {
-    const newDoc = createDocument(doc.folderId, doc.id, doc.projectId);
-    setExpanded(true);
+  const handleNewSubDoc = async () => {
+    const newDoc = await createDocument(doc.folderId, doc.id, doc.projectId, doc.category);
     router.push(`/dashboard/documents/${newDoc.id}`);
   };
 
-  const categoryIcons = {
-    workflow: Workflow,
-    note: BookOpen,
-    developer: Code2,
-    client: Users2
-  };
+  const activeStyles = ({
+    teacher: 'text-primary font-bold bg-primary/5',
+    admin: 'text-purple-400 font-bold bg-purple-500/5',
+    student: 'text-amber-400 font-bold bg-amber-500/5',
+    developer: 'text-sky-400 font-bold bg-sky-500/5',
+  }[doc.category] || 'text-primary font-bold bg-primary/5');
 
-  const CategoryIcon = doc.category ? categoryIcons[doc.category as keyof typeof categoryIcons] : FileText;
+  const activeBarStyles = ({
+    teacher: 'bg-primary',
+    admin: 'bg-purple-500',
+    student: 'bg-amber-500',
+    developer: 'bg-sky-500',
+  }[doc.category] || 'bg-primary');
 
   return (
-    <div className="space-y-0.5">
+    <div className="space-y-0.5 relative animate-in fade-in-50 duration-200">
       <div
         className={cn(
-          'flex items-center gap-2.5 px-3 py-1.5 rounded-xl cursor-pointer group transition-all relative',
-          active ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20' : 'hover:bg-accent text-muted-foreground hover:text-foreground'
+          'group flex items-center justify-between py-1.5 px-3 rounded-lg text-[11px] font-semibold transition-all cursor-pointer relative',
+          active 
+            ? activeStyles 
+            : 'text-muted-foreground hover:text-foreground hover:bg-accent'
         )}
-        style={{ marginLeft: `${level * 16}px` }}
+        style={{ paddingLeft: `${12 + level * 16}px` }}
         onClick={handleSelect}
       >
-        <div 
-          className="w-4 h-4 flex items-center justify-center shrink-0"
-          onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
-        >
-          {hasChildren && <ChevronRight className={cn("w-3.5 h-3.5 transition-transform", expanded && "rotate-90")} />}
-        </div>
-        
+        {active && (
+          <div className={cn("absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 rounded-r animate-pulse", activeBarStyles)} />
+        )}
+
         {isRenaming ? (
           <input
             autoFocus
@@ -334,37 +534,37 @@ function DocItem({ doc, allDocs, active, onRename, level = 0, renamingId, rename
             onKeyDown={e => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') commitRename(); }}
             onBlur={commitRename}
             onClick={e => e.stopPropagation()}
-            className="flex-1 bg-transparent border-b border-primary/50 text-xs font-bold focus:outline-none min-w-0"
+            className="flex-1 bg-transparent border-b border-primary/50 text-[11px] font-bold focus:outline-none min-w-0 py-0.5 text-foreground"
           />
         ) : (
-          <>
-            <CategoryIcon className={cn("w-4 h-4 shrink-0", active ? "text-primary-foreground" : "text-primary/70")} />
-            <span className="flex-1 text-xs truncate font-bold">{doc.title}</span>
-          </>
+          <span className="flex-1 truncate py-0.5 select-none">{doc.title}</span>
         )}
         
-        {!isRenaming && (
-          <div className="hidden group-hover:flex items-center gap-1" onClick={e => e.stopPropagation()}>
-            <button onClick={handleNewSubDoc} className="p-1 hover:bg-background/20 rounded-md"><Plus className="w-3.5 h-3.5" /></button>
-            <button onClick={() => setShowMenu(o => !o)} className="p-1 hover:bg-background/20 rounded-md"><MoreVertical className="w-3.5 h-3.5" /></button>
+        {!isRenaming && !isReaderMode && (
+          <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 ml-2 shrink-0 animate-in slide-in-from-right-1 duration-150" onClick={e => e.stopPropagation()}>
+            <button onClick={handleNewSubDoc} className="p-0.5 hover:bg-accent rounded text-muted-foreground hover:text-foreground transition-all cursor-pointer">
+              <Plus className="w-3.5 h-3.5" />
+            </button>
+            <button onClick={() => setShowMenu(o => !o)} className="p-0.5 hover:bg-accent rounded text-muted-foreground hover:text-foreground transition-all cursor-pointer">
+              <MoreVertical className="w-3.5 h-3.5" />
+            </button>
             
             {showMenu && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-                <div className="absolute right-0 top-full mt-2 z-50 bg-card border border-border rounded-xl shadow-2xl py-2 min-w-[160px] animate-in fade-in zoom-in-95">
-                  <div className="px-3 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest border-b border-border mb-1">Actions</div>
-                  <button onClick={() => { onRename(doc); setShowMenu(false); }} className="flex items-center gap-2.5 w-full text-left px-4 py-2 text-xs font-bold hover:bg-accent transition-all text-foreground">
-                    <Edit3 className="w-3.5 h-3.5" /> Rename
+                <div className="absolute right-0 top-full mt-1 z-50 bg-card border border-border rounded-xl shadow-2xl py-1 min-w-[150px] animate-in fade-in zoom-in-95 text-foreground">
+                  <button onClick={() => { onRename(doc); setShowMenu(false); }} className="flex items-center gap-2 w-full text-left px-3 py-1.5 text-[11px] font-bold hover:bg-accent text-foreground transition-all cursor-pointer">
+                    <Edit3 className="w-3 h-3" /> Rename
                   </button>
-                  <button onClick={() => { togglePin(doc.id); setShowMenu(false); }} className="flex items-center gap-2.5 w-full text-left px-4 py-2 text-xs font-bold hover:bg-accent transition-all text-foreground">
-                    <Pin className="w-3.5 h-3.5" /> {doc.isPinned ? 'Unpin' : 'Pin'}
+                  <button onClick={() => { togglePin(doc.id); setShowMenu(false); }} className="flex items-center gap-2 w-full text-left px-3 py-1.5 text-[11px] font-bold hover:bg-accent text-foreground transition-all cursor-pointer">
+                    <Pin className="w-3 h-3 rotate-45" /> {doc.isPinned ? 'Unpin' : 'Pin'}
                   </button>
-                  <button onClick={() => { toggleFavorite(doc.id); setShowMenu(false); }} className="flex items-center gap-2.5 w-full text-left px-4 py-2 text-xs font-bold hover:bg-accent transition-all text-foreground">
-                    <Star className="w-3.5 h-3.5" /> {doc.isFavorite ? 'Unfavorite' : 'Favorite'}
+                  <button onClick={() => { toggleFavorite(doc.id); setShowMenu(false); }} className="flex items-center gap-2 w-full text-left px-3 py-1.5 text-[11px] font-bold hover:bg-accent text-foreground transition-all cursor-pointer">
+                    <Star className="w-3 h-3" /> {doc.isFavorite ? 'Unfavorite' : 'Favorite'}
                   </button>
                   <div className="border-t border-border mt-1 pt-1">
-                    <button onClick={() => { deleteDocument(doc.id); setShowMenu(false); }} className="flex items-center gap-2.5 w-full text-left px-4 py-2 text-xs font-bold hover:bg-rose-500/10 text-rose-500 transition-all">
-                      <Trash2 className="w-3.5 h-3.5" /> Delete
+                    <button onClick={() => { deleteDocument(doc.id); setShowMenu(false); }} className="flex items-center gap-2 w-full text-left px-3 py-1.5 text-[11px] font-bold hover:bg-rose-500/10 text-rose-500 cursor-pointer">
+                      <Trash2 className="w-3 h-3" /> Delete
                     </button>
                   </div>
                 </div>
@@ -377,14 +577,18 @@ function DocItem({ doc, allDocs, active, onRename, level = 0, renamingId, rename
       <AnimatePresence>
         {expanded && hasChildren && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-            {childDocs.map(child => (
-              <DocItem 
-                key={child.id} doc={child} allDocs={allDocs} active={child.id === activeDocId} 
-                onRename={onRename} renamingId={renamingId} renameVal={renameVal} 
-                setRenameVal={setRenameVal} commitRename={commitRename} 
-                level={level + 1} onMobileClose={onMobileClose}
-              />
-            ))}
+            <div className="space-y-0.5 mt-0.5">
+              {childDocs.map(child => (
+                <DocItem 
+                  key={child.id} doc={child} allDocs={allDocs} 
+                  onRename={onRename} renamingId={renamingId} renameVal={renameVal} 
+                  setRenameVal={setRenameVal} commitRename={commitRename} 
+                  level={level + 1} 
+                  isReaderMode={isReaderMode}
+                  onMobileClose={onMobileClose}
+                />
+              ))}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -1,4 +1,11 @@
-export type Role = 'SUPER_ADMIN' | 'ADMIN' | 'PROJECT_MANAGER' | 'DEVELOPER' | 'QA' | 'CLIENT';
+export type Role = 'SUPER_ADMIN' | 'ADMIN' | 'PROJECT_MANAGER' | 'DEVELOPER' | 'QA' | 'CLIENT' | 'user' | 'admin';
+
+export interface UserPreferences {
+  theme: 'dark' | 'light' | 'system';
+  sidebarLayout: 'default' | 'compact';
+  fontFamily: 'Inter' | 'Outfit' | 'Roboto';
+  accentColor?: 'blue' | 'purple' | 'green' | 'amber' | 'rose' | 'slate';
+}
 
 export interface User {
   id: string;
@@ -6,6 +13,7 @@ export interface User {
   email: string;
   role: Role;
   avatar?: string;
+  preferences?: UserPreferences;
 }
 
 export interface Workspace {

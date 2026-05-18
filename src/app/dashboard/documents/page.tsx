@@ -31,8 +31,8 @@ export default function DocumentsPage() {
           You don't have any documents yet. Create your first document to start building your knowledge base.
         </p>
         <Button 
-          onClick={() => {
-            const doc = createDocument(null);
+          onClick={async () => {
+            const doc = await createDocument(null);
             router.push(`/dashboard/documents/${doc.id}`);
           }}
           className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2"

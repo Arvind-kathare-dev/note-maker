@@ -47,8 +47,8 @@ export default function RootLayout({
   const fontVariables = `${inter.variable} ${outfit.variable} ${roboto.variable} ${playfair.variable} ${montserrat.variable} ${jetbrains.variable}`;
   
   return (
-    <html lang="en" className={`dark h-full ${fontVariables}`}>
-      <body className="antialiased bg-[#05110c] text-green-50 min-h-full flex flex-col">
+    <html lang="en" className={`h-full ${fontVariables}`}>
+      <body className="antialiased min-h-full flex flex-col">
         <Providers>{children}</Providers>
       </body>
     </html>

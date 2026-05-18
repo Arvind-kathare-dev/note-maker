@@ -123,7 +123,7 @@ export default function EditorToolbar({ editor }: ToolbarProps) {
 
   return (
     <div className="flex justify-center w-full max-w-full">
-      <div className="flex items-center gap-1 p-1.5 bg-card/95 backdrop-blur-xl border border-border/60 rounded-2xl shadow-2xl max-w-full overflow-x-auto scrollbar-none mx-auto w-fit">
+      <div className="flex flex-wrap items-center justify-center gap-1.5 p-2 bg-card/95 backdrop-blur-xl border border-border/60 rounded-2xl shadow-2xl max-w-full mx-auto w-fit">
         <div className="flex items-center gap-0.5 border-r border-border/50 pr-1.5 mr-0.5 shrink-0">
           <Btn onClick={() => editor.chain().focus().undo().run()} title="Undo"><Undo className="w-4 h-4" /></Btn>
           <Btn onClick={() => editor.chain().focus().redo().run()} title="Redo"><Redo className="w-4 h-4" /></Btn>

@@ -1,5 +1,11 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import axios from 'axios';
+
+export interface ProjectSection {
+  id: string;
+  label: string;
+  icon?: string;
+}
 
 export interface Project {
   id: string;
@@ -7,69 +13,115 @@ export interface Project {
   description: string;
   icon: string;
   color: string;
+  version?: string;
+  category?: string;
   createdAt: string;
+  sections?: ProjectSection[];
+  sectionLabels?: {
+    teacher?: string;
+    admin?: string;
+    student?: string;
+    developer?: string;
+  };
 }
+
+export const getProjectSections = (project: Project | null | undefined): ProjectSection[] => {
+  if (!project) return [];
+  return project.sections || [];
+};
 
 interface ProjectStore {
   projects: Project[];
   activeProjectId: string | null;
-  createProject: (project: Omit<Project, 'id' | 'createdAt'>) => Project;
-  updateProject: (id: string, updates: Partial<Project>) => void;
-  deleteProject: (id: string) => void;
+  isLoading: boolean;
+  error: string | null;
+  fetchProjects: () => Promise<void>;
+  createProject: (project: Omit<Project, 'id' | 'createdAt'>) => Promise<Project>;
+  updateProject: (id: string, updates: Partial<Project>) => Promise<void>;
+  deleteProject: (id: string) => Promise<void>;
   setActiveProject: (id: string | null) => void;
 }
 
-const uid = () => Math.random().toString(36).slice(2, 11);
-const now = new Date().toISOString();
+export const useProjectStore = create<ProjectStore>((set, get) => ({
+  projects: [],
+  activeProjectId: null,
+  isLoading: false,
+  error: null,
 
-export const useProjectStore = create<ProjectStore>()(
-  persist(
-    (set) => ({
-      projects: [
-        {
-          id: 'p1',
-          name: 'Nexus Platform',
-          description: 'Core platform documentation and specifications.',
-          icon: '🚀',
-          color: '#10b981', // emerald-500
-          createdAt: now,
-        },
-        {
-          id: 'p2',
-          name: 'Summer Camp 2026',
-          description: 'Curriculum, planning, and logistics.',
-          icon: '🏕️',
-          color: '#f59e0b', // amber-500
-          createdAt: now,
+  fetchProjects: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const res = await axios.get('/api/projects');
+      if (res.data.success) {
+        set({ projects: res.data.data, isLoading: false });
+        // Set active project to first seeded project if none active
+        if (res.data.data.length > 0 && !get().activeProjectId) {
+          set({ activeProjectId: res.data.data[0].id });
         }
-      ],
-      activeProjectId: null,
+      } else {
+        set({ error: res.data.error, isLoading: false });
+      }
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+    }
+  },
 
-      createProject: (projectData) => {
-        const newProject: Project = {
-          ...projectData,
-          id: uid(),
-          createdAt: new Date().toISOString(),
-        };
+  createProject: async (projectData) => {
+    set({ isLoading: true, error: null });
+    try {
+      const res = await axios.post('/api/projects', projectData);
+      if (res.data.success) {
+        const newProject = res.data.data;
         set((state) => ({
           projects: [...state.projects, newProject],
+          isLoading: false,
         }));
         return newProject;
-      },
-
-      updateProject: (id, updates) => set((state) => ({
-        projects: state.projects.map((p) => (p.id === id ? { ...p, ...updates } : p)),
-      })),
-
-      deleteProject: (id) => set((state) => ({
-        projects: state.projects.filter((p) => p.id !== id),
-        activeProjectId: state.activeProjectId === id ? null : state.activeProjectId,
-      })),
-
-      setActiveProject: (id) => set({ activeProjectId: id }),
-    }),
-    {
-      name: 'nexus-projects',
+      } else {
+        throw new Error(res.data.error);
+      }
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+      throw err;
     }
-  )
-);
+  },
+
+  updateProject: async (id, updates) => {
+    set({ isLoading: true, error: null });
+    try {
+      const res = await axios.put(`/api/projects/${id}`, updates);
+      if (res.data.success) {
+        set((state) => ({
+          projects: state.projects.map((p) => (p.id === id ? res.data.data : p)),
+          isLoading: false,
+        }));
+      } else {
+        throw new Error(res.data.error);
+      }
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+      throw err;
+    }
+  },
+
+  deleteProject: async (id) => {
+    set({ isLoading: true, error: null });
+    try {
+      const res = await axios.delete(`/api/projects/${id}`);
+      if (res.data.success) {
+        set((state) => ({
+          projects: state.projects.filter((p) => p.id !== id),
+          activeProjectId: state.activeProjectId === id ? null : state.activeProjectId,
+          isLoading: false,
+        }));
+      } else {
+        throw new Error(res.data.error);
+      }
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+      throw err;
+    }
+  },
+
+  setActiveProject: (id) => set({ activeProjectId: id }),
+}));

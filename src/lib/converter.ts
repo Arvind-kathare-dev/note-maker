@@ -53,7 +53,22 @@ export function markdownToJSON(markdown: string): string {
   while (i < lines.length) {
     const line = lines[i].trim();
     
-    if (line.startsWith('#')) {
+    if (line.startsWith('```')) {
+      const language = line.slice(3).trim();
+      let codeText = '';
+      i++;
+      while (i < lines.length && !lines[i].trim().startsWith('```')) {
+        codeText += lines[i] + '\n';
+        i++;
+      }
+      content.push({
+        type: 'codeBlock',
+        attrs: { language: language || 'javascript' },
+        content: codeText ? [{ type: 'text', text: codeText.trim() }] : []
+      });
+      i++;
+      continue;
+    } else if (line.startsWith('#')) {
       const level = line.match(/^#+/)?.[0].length || 1;
       content.push({
         type: 'heading',

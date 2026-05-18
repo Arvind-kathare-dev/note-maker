@@ -5,30 +5,192 @@ import { useState } from 'react';
 import {
   Plus, FileText, Folder, Search, MoreHorizontal, ArrowLeft,
   Trash2, Edit3, BookOpen, Code2, Workflow, Users2, Star, Clock,
-  ChevronRight, FolderPlus, StickyNote, X, FileCheck
+  ChevronRight, FolderPlus, StickyNote, X, FileCheck, GraduationCap, Users,
+  ShieldAlert, Backpack, Briefcase, ChevronDown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useProjectStore } from '@/store/useProjectStore';
 import { useDocumentStore, Doc } from '@/store/useDocumentStore';
+import { useAuthStore } from '@/store/useAuthStore';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import Link from 'next/link';
 
-type Tab = 'docs' | 'notes' | 'recent';
+type Tab = 'docs' | 'recent';
 
-const DOC_CATEGORY_META = {
-  workflow: { label: 'Workflow', icon: Workflow, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-  note: { label: 'Note', icon: BookOpen, color: 'text-purple-500', bg: 'bg-purple-500/10' },
-  developer: { label: 'Developer', icon: Code2, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-  client: { label: 'Client', icon: Users2, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-};
+function SectionsModal({ project, onClose }: { project: any; onClose: () => void }) {
+  const { updateProject } = useProjectStore();
+  const [customSections, setCustomSections] = useState<Array<{ id: string; label: string; icon: string }>>(
+    project.sections && project.sections.length > 0
+      ? project.sections
+      : [{ id: `sec_${Math.random().toString(36).slice(2, 7)}`, label: 'New Custom Section', icon: 'BookOpen' }]
+  );
+
+  const handleAddCustomSection = () => {
+    const newId = `sec_${Math.random().toString(36).slice(2, 7)}`;
+    setCustomSections(prev => [...prev, { id: newId, label: 'New Custom Section', icon: 'BookOpen' }]);
+  };
+
+  const handleRemoveCustomSection = (id: string) => {
+    setCustomSections(prev => prev.filter(s => s.id !== id));
+  };
+
+  const handleUpdateSectionLabel = (id: string, label: string) => {
+    setCustomSections(prev => prev.map(s => s.id === id ? { ...s, label } : s));
+  };
+
+  const handleUpdateSectionIcon = (id: string, icon: string) => {
+    setCustomSections(prev => prev.map(s => s.id === id ? { ...s, icon } : s));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const formattedSections = customSections.map(s => ({
+      id: s.id,
+      label: s.label.trim(),
+      icon: s.icon
+    }));
+    await updateProject(project.id, { sections: formattedSections });
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div className="bg-card border border-border rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-6 relative text-left">
+        <button onClick={onClose} className="absolute right-4 top-4 p-1 hover:bg-accent rounded-lg text-muted-foreground hover:text-foreground transition-colors">
+          <X className="w-4 h-4" />
+        </button>
+
+        <div className="space-y-1">
+          <h2 className="text-base font-black text-foreground uppercase tracking-wider font-outfit">Configure Project Sections</h2>
+          <p className="text-xs text-muted-foreground font-medium">Add, rename, or delete the custom category tabs inside your workspace.</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="space-y-3 p-4 bg-accent/50 border border-border rounded-2xl max-h-[300px] overflow-y-auto scrollbar-thin">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Workspace Custom Sections</span>
+              <button
+                type="button"
+                onClick={handleAddCustomSection}
+                className="text-[10px] font-black uppercase tracking-wider text-primary hover:text-primary/80 transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <Plus className="w-2.5 h-2.5" /> Add Section
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              {customSections.map((section, idx) => (
+                <div key={section.id} className="flex items-center gap-3 bg-card border border-border p-3 rounded-2xl hover:border-primary/20 hover:shadow-lg transition-all group/item">
+                  <div className="relative shrink-0">
+                    <select
+                      value={section.icon}
+                      onChange={e => handleUpdateSectionIcon(section.id, e.target.value)}
+                      className="appearance-none bg-background border border-border hover:border-border/80 focus:border-primary/50 rounded-xl pl-3 pr-6 py-2 text-sm focus:outline-none cursor-pointer w-14 transition-all text-center text-foreground"
+                    >
+                      {[
+                        { emoji: 'GraduationCap', label: '🎓' },
+                        { emoji: 'ShieldAlert', label: '🛡️' },
+                        { emoji: 'Backpack', label: '🎒' },
+                        { emoji: 'Code2', label: '💻' },
+                        { emoji: 'Briefcase', label: '💼' },
+                        { emoji: 'Users2', label: '👥' },
+                        { emoji: 'BookOpen', label: '📝' }
+                      ].map(opt => (
+                        <option key={opt.emoji} value={opt.emoji}>{opt.label}</option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-1.5 flex items-center text-muted-foreground">
+                      <ChevronDown className="w-3 h-3" />
+                    </div>
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <input
+                      type="text"
+                      required
+                      value={section.label}
+                      onChange={e => handleUpdateSectionLabel(section.id, e.target.value)}
+                      placeholder={`Section ${idx + 1} name...`}
+                      className="w-full bg-background border border-border hover:border-border/85 focus:border-primary/40 focus:bg-background rounded-xl px-3 py-2 text-xs font-bold text-foreground focus:outline-none transition-all placeholder:text-muted-foreground/50"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveCustomSection(section.id)}
+                    className="p-2 bg-rose-500/5 hover:bg-rose-500/10 rounded-xl text-rose-400 hover:text-rose-350 transition-colors shrink-0 cursor-pointer"
+                    title="Remove custom section"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+              {customSections.length === 0 && (
+                <p className="text-[10px] text-muted-foreground/60 italic text-center py-4 select-none">No custom sections. Click Add Section above.</p>
+              )}
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-1">
+            <Button type="button" variant="outline" className="flex-1 border-border/40 hover:bg-accent" onClick={onClose}>Cancel</Button>
+            <Button type="submit" className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 font-bold">
+              Save Configuration
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 function DocCard({ doc, onDelete }: { doc: Doc; onDelete: () => void }) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
-  const meta = DOC_CATEGORY_META[doc.category];
+  const { projects } = useProjectStore();
+
+  const project = projects.find(p => p.id === doc.projectId);
+  const customSec = project?.sections?.find(s => s.id === doc.category);
+
+  const getCategoryMeta = () => {
+    if (customSec) {
+      const Icon = customSec.icon === 'GraduationCap' ? GraduationCap
+                 : customSec.icon === 'ShieldAlert' ? ShieldAlert
+                 : customSec.icon === 'Backpack' ? Backpack
+                 : customSec.icon === 'Code2' ? Code2
+                 : customSec.icon === 'Briefcase' ? Briefcase
+                 : customSec.icon === 'Users2' ? Users2
+                 : BookOpen;
+      const color = doc.category === 'teacher' ? 'text-emerald-400'
+                  : doc.category === 'admin' ? 'text-purple-400'
+                  : doc.category === 'student' ? 'text-amber-400'
+                  : doc.category === 'developer' ? 'text-sky-400'
+                  : 'text-emerald-400';
+      const bg = doc.category === 'teacher' ? 'bg-emerald-400/10'
+               : doc.category === 'admin' ? 'bg-purple-400/10'
+               : doc.category === 'student' ? 'bg-amber-400/10'
+               : doc.category === 'developer' ? 'bg-sky-400/10'
+               : 'bg-emerald-400/10';
+
+      return {
+        label: customSec.label,
+        icon: Icon,
+        color,
+        bg
+      };
+    }
+
+    return {
+      label: doc.category.toUpperCase(),
+      icon: FileText,
+      color: 'text-emerald-400',
+      bg: 'bg-emerald-400/10'
+    };
+  };
+
+  const meta = getCategoryMeta();
   const Icon = meta.icon;
 
   return (
@@ -139,10 +301,16 @@ export default function ProjectDetailPage() {
   const router = useRouter();
   const { projects } = useProjectStore();
   const { documents, folders, createDocument, deleteDocument, createFolder } = useDocumentStore();
+  const { user } = useAuthStore();
+  const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN' || user?.role === 'admin';
+
   const [tab, setTab] = useState<Tab>('docs');
   const [search, setSearch] = useState('');
   const [newFolderName, setNewFolderName] = useState('');
   const [showFolderInput, setShowFolderInput] = useState(false);
+  const [showFolderInputId, setShowFolderInputId] = useState<string | null>(null);
+  const [showSectionsModal, setShowSectionsModal] = useState(false);
+  const [showNewDocDropdown, setShowNewDocDropdown] = useState(false);
 
   const project = projects.find(p => p.id === id);
   if (!project) {
@@ -160,28 +328,35 @@ export default function ProjectDetailPage() {
     );
   }
 
-  const projectDocs = documents.filter(d => d.projectId === id);
+  const projectDocs = documents.filter(d => 
+    d.projectId === id && 
+    (isAdmin ? true : d.status === 'published')
+  );
   const projectFolders = folders.filter(f => f.projectId === id);
-  const notesDocs = projectDocs.filter(d => d.category === 'note');
-  const nonNoteDocs = projectDocs.filter(d => d.category !== 'note');
   const recentDocs = [...projectDocs].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()).slice(0, 6);
 
-  const filteredDocs = nonNoteDocs.filter(d => d.title.toLowerCase().includes(search.toLowerCase()));
-  const filteredNotes = notesDocs.filter(d => d.title.toLowerCase().includes(search.toLowerCase()));
+  const filteredDocs = projectDocs.filter(d => d.title.toLowerCase().includes(search.toLowerCase()));
 
-  const handleCreateDoc = (folderId?: string | null, category: 'workflow' | 'note' | 'developer' | 'client' = 'workflow') => {
-    const doc = createDocument(folderId ?? null, null, id, category);
+  const handleCreateDoc = async (folderId?: string | null, category: string = 'teacher') => {
+    const doc = await createDocument(folderId ?? null, null, id, category);
     router.push(`/dashboard/documents/${doc.id}`);
   };
 
-  const handleCreateFolder = () => {
+  const handleCreateFolder = async () => {
     if (!newFolderName.trim()) return;
-    createFolder(newFolderName.trim(), null, id);
+    await createFolder(newFolderName.trim(), null, id);
     setNewFolderName('');
     setShowFolderInput(false);
   };
 
-  const unfoldered = filteredDocs.filter(d => !d.folderId || !projectFolders.find(f => f.id === d.folderId));
+  const handleCreateFolderWithParent = async (parentId: string) => {
+    if (!newFolderName.trim()) return;
+    await createFolder(newFolderName.trim(), parentId, id);
+    setNewFolderName('');
+    setShowFolderInputId(null);
+  };
+
+  const unfoldered = filteredDocs.filter(d => !d.folderId || d.folderId.startsWith('f_') || !projectFolders.find(f => f.id === d.folderId));
 
   return (
     <div className="flex flex-col h-full p-6 md:p-8 max-w-7xl mx-auto w-full">
@@ -200,20 +375,76 @@ export default function ProjectDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 sm:ml-auto">
-          <Button variant="outline" size="sm" onClick={() => handleCreateDoc(null, 'note')} className="gap-2">
-            <StickyNote className="w-3.5 h-3.5" /> New Note
-          </Button>
-          <Button size="sm" onClick={() => handleCreateDoc(null, 'workflow')} className="gap-2">
-            <Plus className="w-3.5 h-3.5" /> New Doc
-          </Button>
+          {isAdmin && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowSectionsModal(true)}
+              className="gap-2 border-border/40 hover:bg-accent font-semibold"
+            >
+              <Workflow className="w-3.5 h-3.5" /> Manage Sections
+            </Button>
+          )}
+
+          <div className="relative">
+            <Button
+              size="sm"
+              onClick={() => {
+                if (project.sections && project.sections.length > 0) {
+                  setShowNewDocDropdown(!showNewDocDropdown);
+                } else if (isAdmin) {
+                  setShowSectionsModal(true);
+                }
+              }}
+              className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-black cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" /> New Document
+            </Button>
+            {showNewDocDropdown && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowNewDocDropdown(false)} />
+                <div className="absolute right-0 top-full mt-1.5 z-50 bg-card border border-border rounded-xl shadow-2xl py-1.5 w-48 text-foreground animate-in fade-in zoom-in-95">
+                  <div className="px-3 py-1 text-[9px] font-black text-muted-foreground uppercase tracking-widest border-b border-border/20 mb-1">
+                    Select Section
+                  </div>
+                  {project.sections && project.sections.length > 0 ? (
+                    project.sections.map(section => (
+                      <button
+                        key={section.id}
+                        onClick={() => {
+                          handleCreateDoc(null, section.id);
+                          setShowNewDocDropdown(false);
+                        }}
+                        className="w-full text-left px-3 py-2 text-xs font-bold hover:bg-accent flex items-center gap-2 hover:text-primary transition-colors"
+                      >
+                        <span className="text-sm shrink-0">
+                          {section.icon === 'GraduationCap' ? '🎓'
+                           : section.icon === 'ShieldAlert' ? '🛡️'
+                           : section.icon === 'Backpack' ? '🎒'
+                           : section.icon === 'Code2' ? '💻'
+                           : section.icon === 'Briefcase' ? '💼'
+                           : section.icon === 'Users2' ? '👥'
+                           : '📝'}
+                        </span>
+                        <span className="truncate">{section.label}</span>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-3 py-2 text-[10px] text-muted-foreground italic font-semibold leading-relaxed">
+                      No custom sections created yet.
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
+      <div className="grid grid-cols-2 gap-3 mb-6">
         {[
           { label: 'Total Docs', value: projectDocs.length, icon: FileText, color: 'text-primary' },
-          { label: 'Notes', value: notesDocs.length, icon: StickyNote, color: 'text-purple-500' },
           { label: 'Folders', value: projectFolders.length, icon: Folder, color: 'text-amber-500' },
         ].map(stat => {
           const Icon = stat.icon;
@@ -235,7 +466,6 @@ export default function ProjectDetailPage() {
       <div className="flex items-center gap-1 p-1 bg-accent/50 rounded-xl border border-border mb-6 w-fit">
         {([
           { id: 'docs', label: 'Documents', icon: FileText },
-          { id: 'notes', label: 'Notes', icon: StickyNote },
           { id: 'recent', label: 'Recent', icon: Clock },
         ] as const).map(t => (
           <button
@@ -264,73 +494,162 @@ export default function ProjectDetailPage() {
       </div>
 
       {/* DOCS TAB */}
+      {/* DOCS TAB */}
       {tab === 'docs' && (
-        <div className="space-y-6 flex-1">
-          {/* Folder creation */}
-          <div className="flex items-center gap-2">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex-1">Folders & Documents</p>
-            {showFolderInput ? (
-              <div className="flex items-center gap-2">
-                <Input
-                  value={newFolderName}
-                  onChange={e => setNewFolderName(e.target.value)}
-                  placeholder="Folder name..."
-                  className="h-7 text-xs w-40"
-                  autoFocus
-                  onKeyDown={e => { if (e.key === 'Enter') handleCreateFolder(); if (e.key === 'Escape') setShowFolderInput(false); }}
-                />
-                <Button size="sm" className="h-7 px-2 text-xs" onClick={handleCreateFolder}>Add</Button>
-                <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => setShowFolderInput(false)}><X className="w-3.5 h-3.5" /></Button>
-              </div>
-            ) : (
-              <Button size="sm" variant="ghost" className="h-7 gap-1.5 text-xs" onClick={() => setShowFolderInput(true)}>
-                <FolderPlus className="w-3.5 h-3.5" /> New Folder
-              </Button>
-            )}
-          </div>
+        <div className="space-y-10 flex-1">
+          {project.sections && project.sections.length > 0 ? (
+            project.sections.map(section => {
+              const role = section.id;
+              const sectionDocs = filteredDocs.filter(d => d.category === role);
+              
+              // Custom folders belonging to this section
+              const sectionFolders = projectFolders.filter(f => 
+                f.parentId === `f_${role}_${project.id}` && !f.id.startsWith('f_')
+              );
+              
+              // Documents in this section that are unsorted
+              const sectionUnsorted = sectionDocs.filter(d => 
+                !d.folderId || 
+                d.folderId.startsWith('f_') || 
+                !projectFolders.find(f => f.id === d.folderId)
+              );
+              
+              const Icon = section.icon === 'GraduationCap' ? GraduationCap
+                         : section.icon === 'ShieldAlert' ? ShieldAlert
+                         : section.icon === 'Backpack' ? Backpack
+                         : section.icon === 'Code2' ? Code2
+                         : section.icon === 'Briefcase' ? Briefcase
+                         : section.icon === 'Users2' ? Users2
+                         : BookOpen;
 
-          {projectFolders.map(folder => {
-            const folderDocs = filteredDocs.filter(d => d.folderId === folder.id);
-            return (
-              <FolderSection
-                key={folder.id}
-                folder={folder}
-                docs={folderDocs}
-                projectId={id}
-                onCreateDoc={folderId => handleCreateDoc(folderId)}
-                onDeleteDoc={deleteDocument}
-              />
-            );
-          })}
+              const accentColor = role === 'teacher' ? 'from-primary/20 to-primary/5 border-primary/30 text-primary'
+                                : role === 'admin' ? 'from-purple-500/20 to-purple-500/5 border-purple-500/30 text-purple-450'
+                                : role === 'student' ? 'from-amber-500/20 to-amber-500/5 border-amber-500/30 text-amber-500'
+                                : role === 'developer' ? 'from-sky-500/20 to-sky-500/5 border-sky-500/30 text-sky-500'
+                                : 'from-primary/20 to-primary/5 border-primary/30 text-primary';
 
-          {/* Unfoldered docs */}
-          {unfoldered.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 px-2 py-1.5 text-sm font-semibold text-muted-foreground">
-                <FileText className="w-3.5 h-3.5" />
-                <span>Unsorted</span>
-                <span className="text-[10px] font-normal ml-auto">{unfoldered.length}</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {unfoldered.map(doc => (
-                  <DocCard key={doc.id} doc={doc} onDelete={() => deleteDocument(doc.id)} />
-                ))}
-              </div>
-            </div>
-          )}
+              return (
+                <div 
+                  key={role} 
+                  className="bg-card/60 border border-border/40 rounded-3xl p-6 md:p-8 space-y-6 relative overflow-hidden backdrop-blur-md shadow-xl"
+                >
+                  {/* Decorative section glow */}
+                  <div className={cn("absolute -right-20 -top-20 w-48 h-48 rounded-full blur-3xl opacity-20 bg-linear-to-br", accentColor)} />
+                  
+                  {/* Section Header */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/20 pb-4 relative z-10">
+                    <div className="flex items-center gap-3">
+                      <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center text-lg bg-background border", accentColor)}>
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-bold text-foreground uppercase tracking-wide font-outfit">{section.label} Manuals</h2>
+                        <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">{sectionDocs.length} Documents · {sectionFolders.length} Folders</p>
+                      </div>
+                    </div>
+                    
+                    {isAdmin && (
+                      <div className="flex items-center gap-2">
+                        {showFolderInputId === role ? (
+                          <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-3 duration-250">
+                            <Input
+                              value={newFolderName}
+                              onChange={e => setNewFolderName(e.target.value)}
+                              placeholder="Folder name..."
+                              className="h-8 text-xs w-36 bg-background border-border"
+                              autoFocus
+                              onKeyDown={e => { 
+                                if (e.key === 'Enter') handleCreateFolderWithParent(`f_${role}_${project.id}`); 
+                                if (e.key === 'Escape') setShowFolderInputId(null); 
+                              }}
+                            />
+                            <Button size="sm" className="h-8 px-3 text-xs bg-primary text-primary-foreground hover:bg-primary/90 font-black rounded-lg" onClick={() => handleCreateFolderWithParent(`f_${role}_${project.id}`)}>Add</Button>
+                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-lg text-muted-foreground hover:text-foreground" onClick={() => setShowFolderInputId(null)}><X className="w-3.5 h-3.5" /></Button>
+                          </div>
+                        ) : (
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-primary hover:bg-primary/5 border border-border/20 hover:border-primary/20 rounded-xl"
+                            onClick={() => { setShowFolderInputId(role); setNewFolderName(''); }}
+                          >
+                            <FolderPlus className="w-3.5 h-3.5" /> New Folder
+                          </Button>
+                        )}
 
-          {filteredDocs.length === 0 && (
+                        <Button
+                          size="sm"
+                          onClick={() => handleCreateDoc(null, role)}
+                          className="h-8 gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-xl shadow-lg shadow-primary/10 cursor-pointer"
+                        >
+                          <Plus className="w-3.5 h-3.5" /> Add Document
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Section Content */}
+                  <div className="space-y-6 relative z-10 text-left">
+                    {/* Folders block */}
+                    {sectionFolders.map(folder => {
+                      const folderDocs = sectionDocs.filter(d => d.folderId === folder.id);
+                      return (
+                        <FolderSection
+                          key={folder.id}
+                          folder={folder}
+                          docs={folderDocs}
+                          projectId={id}
+                          onCreateDoc={(folderId) => handleCreateDoc(folderId, role)}
+                          onDeleteDoc={deleteDocument}
+                        />
+                      );
+                    })}
+
+                    {/* Unsorted / Unfoldered docs inside section */}
+                    {sectionUnsorted.length > 0 && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 px-1 py-1 text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                          <FileText className="w-3.5 h-3.5 text-primary" />
+                          <span>Loose Guides / SOPs</span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {sectionUnsorted.map(doc => (
+                            <DocCard key={doc.id} doc={doc} onDelete={() => deleteDocument(doc.id)} />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Section Empty State */}
+                    {sectionDocs.length === 0 && (
+                      <div className="flex flex-col items-center justify-center py-10 text-center bg-accent/20 rounded-2xl border border-dashed border-border p-6 select-none">
+                        <FileText className="w-8 h-8 text-muted-foreground mb-3" />
+                        <h4 className="text-xs font-bold text-foreground/90 uppercase tracking-wider">No Guides in {section.label}</h4>
+                        <p className="text-xs text-muted-foreground mt-1 max-w-xs leading-relaxed">There are currently no manuals, code resources, or documents published under this category.</p>
+                        {isAdmin && (
+                          <Button 
+                            onClick={() => handleCreateDoc(null, role)} 
+                            className="mt-4 h-8 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 hover:border-primary/30 text-xs font-bold px-4 rounded-xl transition-all"
+                          >
+                            Create First Document
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <div className="w-14 h-14 rounded-2xl bg-accent flex items-center justify-center mb-4">
                 <FileText className="w-7 h-7 text-muted-foreground" />
               </div>
-              <h3 className="text-base font-bold mb-2">{search ? 'No docs match your search' : 'No documents yet'}</h3>
-              <p className="text-sm text-muted-foreground mb-5">
-                {search ? 'Try a different keyword.' : 'Create your first document for this project.'}
-              </p>
-              {!search && (
-                <Button className="gap-2" onClick={() => handleCreateDoc(null, 'workflow')}>
-                  <Plus className="w-4 h-4" /> Create Document
+              <h3 className="text-base font-bold mb-2">No Sections Configured</h3>
+              <p className="text-sm text-muted-foreground mb-5">Set up custom categories/sections first to organize your project.</p>
+              {isAdmin && (
+                <Button className="gap-2" onClick={() => setShowSectionsModal(true)}>
+                  <Workflow className="w-4 h-4" /> Configure Sections
                 </Button>
               )}
             </div>
@@ -338,38 +657,7 @@ export default function ProjectDetailPage() {
         </div>
       )}
 
-      {/* NOTES TAB */}
-      {tab === 'notes' && (
-        <div className="flex-1">
-          {filteredNotes.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-purple-500/10 flex items-center justify-center mb-4">
-                <StickyNote className="w-7 h-7 text-purple-500" />
-              </div>
-              <h3 className="text-base font-bold mb-2">{search ? 'No notes found' : 'No notes yet'}</h3>
-              <p className="text-sm text-muted-foreground mb-5">Quick notes and meeting logs for this project.</p>
-              {!search && (
-                <Button className="gap-2" onClick={() => handleCreateDoc(null, 'note')}>
-                  <Plus className="w-4 h-4" /> New Note
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {filteredNotes.map(doc => (
-                <DocCard key={doc.id} doc={doc} onDelete={() => deleteDocument(doc.id)} />
-              ))}
-              <button
-                onClick={() => handleCreateDoc(null, 'note')}
-                className="border border-dashed border-border rounded-xl p-4 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:border-purple-500/50 hover:text-purple-500 transition-all min-h-[100px]"
-              >
-                <Plus className="w-5 h-5" />
-                <span className="text-sm font-medium">New Note</span>
-              </button>
-            </div>
-          )}
-        </div>
-      )}
+
 
       {/* RECENT TAB */}
       {tab === 'recent' && (
@@ -388,6 +676,9 @@ export default function ProjectDetailPage() {
             </div>
           )}
         </div>
+      )}
+      {showSectionsModal && (
+        <SectionsModal project={project} onClose={() => setShowSectionsModal(false)} />
       )}
     </div>
   );

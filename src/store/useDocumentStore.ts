@@ -1,7 +1,6 @@
-'use client';
-
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import axios from 'axios';
+import { useProjectStore } from './useProjectStore';
 
 export interface DocFolder {
   id: string;
@@ -20,7 +19,7 @@ export interface Doc {
   projectId: string | null;
   title: string;
   content: string;
-  category: 'workflow' | 'note' | 'developer' | 'client';
+  category: string;
   emoji?: string;
   tags: string[];
   status: 'draft' | 'published' | 'archived';
@@ -38,113 +37,260 @@ interface DocumentStore {
   folders: DocFolder[];
   documents: Doc[];
   activeDocId: string | null;
-  createFolder: (name: string, parentId?: string | null, projectId?: string | null) => DocFolder;
-  updateFolder: (id: string, updates: Partial<DocFolder>) => void;
-  deleteFolder: (id: string) => void;
-  createDocument: (folderId?: string | null, parentId?: string | null, projectId?: string | null, category?: 'workflow' | 'note' | 'developer' | 'client') => Doc;
-  updateDocument: (id: string, updates: Partial<Doc>) => void;
-  deleteDocument: (id: string) => void;
+  isLoading: boolean;
+  error: string | null;
+  fetchFolders: () => Promise<void>;
+  fetchDocuments: () => Promise<void>;
+  createFolder: (name: string, parentId?: string | null, projectId?: string | null, customId?: string) => Promise<DocFolder>;
+  updateFolder: (id: string, updates: Partial<DocFolder>) => Promise<void>;
+  deleteFolder: (id: string) => Promise<void>;
+  createDocument: (folderId?: string | null, parentId?: string | null, projectId?: string | null, category?: string) => Promise<Doc>;
+  updateDocument: (id: string, updates: Partial<Doc>) => Promise<void>;
+  deleteDocument: (id: string) => Promise<void>;
   setActiveDoc: (id: string | null) => void;
-  togglePin: (id: string) => void;
-  toggleFavorite: (id: string) => void;
-  getOrCreateCategoryFolder: (category: 'workflow' | 'note' | 'developer' | 'client', projectId?: string | null) => string;
+  togglePin: (id: string) => Promise<void>;
+  toggleFavorite: (id: string) => Promise<void>;
+  getOrCreateCategoryFolder: (category: string, projectId?: string | null) => Promise<string>;
 }
 
-const uid = () => Math.random().toString(36).slice(2, 11);
-const now = new Date().toISOString();
-
-const WELCOME = JSON.stringify({
-  type: 'doc',
-  content: [
-    { type: 'heading', attrs: { level: 1 }, content: [{ type: 'text', text: '📘 Welcome to Nexus Docs' }] },
-    { type: 'paragraph', content: [{ type: 'text', text: 'A powerful, Wiki.js-inspired documentation editor. Click ' }, { type: 'text', marks: [{ type: 'bold' }], text: 'Edit' }, { type: 'text', text: ' to start writing.' }] },
-    { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: '✨ Features' }] },
-    { type: 'bulletList', content: [
-      { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', marks: [{ type: 'bold' }], text: 'Rich Text' }, { type: 'text', text: ' — Bold, Italic, Underline, Strike, Code, Subscript, Superscript' }] }] },
-      { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', marks: [{ type: 'bold' }], text: 'Typography' }, { type: 'text', text: ' — Font family, font size, text color, text highlight' }] }] },
-      { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', marks: [{ type: 'bold' }], text: 'Blocks' }, { type: 'text', text: ' — Headings H1–H4, blockquote, code block, divider' }] }] },
-      { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', marks: [{ type: 'bold' }], text: 'Lists' }, { type: 'text', text: ' — Bullet, Ordered, Task (checkbox) lists' }] }] },
-      { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', marks: [{ type: 'bold' }], text: 'Media' }, { type: 'text', text: ' — Images, YouTube embeds' }] }] },
-      { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', marks: [{ type: 'bold' }], text: 'Tables' }, { type: 'text', text: ' — Insert, add/delete rows & columns' }] }] },
-    ]},
-    { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: '🚀 Keyboard Shortcuts' }] },
-    { type: 'blockquote', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Ctrl+B Bold · Ctrl+I Italic · Ctrl+U Underline · Ctrl+Z Undo · Ctrl+Y Redo · Ctrl+K Link' }] }] },
-    { type: 'codeBlock', attrs: { language: 'typescript' }, content: [{ type: 'text', text: '// Markdown is auto-converted!\n## Heading\n**bold** _italic_ `code`\n- bullet list item\n1. ordered list\n> blockquote' }] },
-  ],
-});
-
-const categoryFolderMeta: Record<'workflow' | 'note' | 'developer' | 'client', { name: string; icon: string }> = {
-  workflow: { name: 'Workflow Docs', icon: '📋' },
-  note: { name: 'Meeting Notes', icon: '📝' },
-  developer: { name: 'Developer Docs', icon: '⚙️' },
-  client: { name: 'Client Documents', icon: '👥' },
+const categoryFolderMeta: Record<'teacher' | 'developer' | 'admin' | 'student', { name: string; icon: string }> = {
+  teacher: { name: 'Staff SOPs', icon: '👩‍🏫' },
+  developer: { name: 'Developer Specs', icon: '⚙️' },
+  admin: { name: 'Admin Guidelines', icon: '🔑' },
+  student: { name: 'Client Help Manuals', icon: '🎒' },
 };
 
-export const useDocumentStore = create<DocumentStore>()(
-  persist(
-    (set, get) => ({
-      folders: [
-        { id: 'f1', name: 'Getting Started', parentId: null, projectId: null, icon: '🚀', color: '#6366f1', createdAt: now },
-        { id: 'f2', name: 'Technical Docs', parentId: null, projectId: 'p1', icon: '⚙️', color: '#22c55e', createdAt: now },
-        { id: 'f3', name: 'SOPs & Policies', parentId: null, projectId: null, icon: '📋', color: '#f59e0b', createdAt: now },
-      ],
-      documents: [
-        { id: 'd1', folderId: 'f1', parentId: null, projectId: null, title: 'Welcome to Nexus Docs', content: WELCOME, category: 'workflow', emoji: '📘', tags: ['intro', 'guide'], status: 'published', isPinned: true, isFavorite: false, wordCount: 120, authorName: 'John Doe', authorAvatar: 'https://i.pravatar.cc/150?u=1', version: 1, createdAt: now, updatedAt: now },
-        { id: 'd2', folderId: 'f2', parentId: null, projectId: 'p1', title: 'Architecture Overview', content: JSON.stringify({ type: 'doc', content: [{ type: 'heading', attrs: { level: 1 }, content: [{ type: 'text', text: 'Architecture Overview' }] }, { type: 'paragraph', content: [{ type: 'text', text: 'High-level architecture of the Nexus platform.' }] }] }), category: 'developer', emoji: '🏗️', tags: ['architecture'], status: 'published', isPinned: false, isFavorite: true, wordCount: 340, authorName: 'John Doe', authorAvatar: 'https://i.pravatar.cc/150?u=1', version: 3, createdAt: now, updatedAt: now },
-        { id: 'd2_1', folderId: 'f2', parentId: 'd2', projectId: 'p1', title: 'Database Schema', content: JSON.stringify({ type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Sub-page detailing the database schema.' }] }] }), category: 'developer', emoji: '🗄️', tags: ['db'], status: 'draft', isPinned: false, isFavorite: false, wordCount: 45, authorName: 'John Doe', authorAvatar: 'https://i.pravatar.cc/150?u=1', version: 1, createdAt: now, updatedAt: now },
-        { id: 'd3', folderId: 'f3', parentId: null, projectId: null, title: 'Employee Onboarding SOP', content: JSON.stringify({ type: 'doc', content: [{ type: 'heading', attrs: { level: 1 }, content: [{ type: 'text', text: 'Employee Onboarding SOP' }] }, { type: 'paragraph', content: [{ type: 'text', text: 'Standard operating procedure for onboarding.' }] }] }), category: 'workflow', emoji: '👋', tags: ['hr', 'sop'], status: 'draft', isPinned: false, isFavorite: false, wordCount: 89, authorName: 'Jane Smith', authorAvatar: 'https://i.pravatar.cc/150?u=2', version: 1, createdAt: now, updatedAt: now },
-        { id: 'd4', folderId: null, parentId: null, projectId: null, title: 'Quick Notes', content: JSON.stringify({ type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Personal scratchpad...' }] }] }), category: 'note', emoji: '📝', tags: ['personal'], status: 'draft', isPinned: true, isFavorite: true, wordCount: 15, authorName: 'John Doe', authorAvatar: 'https://i.pravatar.cc/150?u=1', version: 1, createdAt: now, updatedAt: now },
-      ],
-      activeDocId: 'd1',
+export const useDocumentStore = create<DocumentStore>((set, get) => ({
+  folders: [],
+  documents: [],
+  activeDocId: null,
+  isLoading: false,
+  error: null,
 
-      getOrCreateCategoryFolder: (category: 'workflow' | 'note' | 'developer' | 'client', projectId: string | null = null) => {
-        const { folders, createFolder } = get();
-        const folderName = categoryFolderMeta[category].name;
-        const existing = folders.find(f => f.name === folderName && f.projectId === projectId);
-        
-        if (existing) return existing.id;
-        
-        const newFolder = createFolder(folderName, null, projectId);
-        set(s => ({
-          folders: s.folders.map(f => f.id === newFolder.id ? { ...f, icon: categoryFolderMeta[category].icon } : f)
+  fetchFolders: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const res = await axios.get('/api/folders');
+      if (res.data.success) {
+        set({ folders: res.data.data, isLoading: false });
+      } else {
+        set({ error: res.data.error, isLoading: false });
+      }
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+    }
+  },
+
+  fetchDocuments: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const res = await axios.get('/api/documents');
+      if (res.data.success) {
+        set({ documents: res.data.data, isLoading: false });
+        // Set active document to first in list if none active
+        if (res.data.data.length > 0 && !get().activeDocId) {
+          set({ activeDocId: res.data.data[0].id });
+        }
+      } else {
+        set({ error: res.data.error, isLoading: false });
+      }
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+    }
+  },
+
+  getOrCreateCategoryFolder: async (category, projectId = null) => {
+    const { folders, createFolder } = get();
+    const folderId = `f_${category}_${projectId}`;
+    const existing = folders.find(f => f.id === folderId);
+    
+    if (existing) return existing.id;
+    
+    const projects = useProjectStore.getState().projects;
+    const project = projects.find(p => p.id === projectId);
+    const customSection = project?.sections?.find((s: any) => s.id === category);
+    
+    const metaKey = category as keyof typeof categoryFolderMeta;
+    const name = customSection?.label 
+      ? `${customSection.label.toUpperCase()} MANUALS`
+      : (categoryFolderMeta[metaKey]?.name || (category.toUpperCase() + ' MANUALS'));
+      
+    const icon = categoryFolderMeta[metaKey]?.icon || '📁';
+    
+    const created = await createFolder(name, null, projectId, folderId);
+    return created.id;
+  },
+
+  createFolder: async (name, parentId = null, projectId = null, customId) => {
+    set({ isLoading: true, error: null });
+    try {
+      const idVal = customId || Math.random().toString(36).slice(2, 11);
+      const res = await axios.post('/api/folders', {
+        id: idVal,
+        name,
+        parentId,
+        projectId,
+        icon: '📁',
+        color: ''
+      });
+      if (res.data.success) {
+        const newFolder = res.data.data;
+        set((state) => ({
+          folders: [...state.folders, newFolder],
+          isLoading: false
         }));
-        return newFolder.id;
-      },
+        return newFolder;
+      } else {
+        throw new Error(res.data.error);
+      }
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+      throw err;
+    }
+  },
 
-      createFolder: (name, parentId = null, projectId = null) => {
-        const folder: DocFolder = { id: uid(), name, parentId: parentId ?? null, projectId: projectId ?? null, icon: '📁', createdAt: new Date().toISOString() };
-        set(s => ({ folders: [...s.folders, folder] }));
-        return folder;
-      },
-      updateFolder: (id, updates) => set(s => ({ folders: s.folders.map(f => f.id === id ? { ...f, ...updates } : f) })),
-      deleteFolder: (id) => set(s => ({ folders: s.folders.filter(f => f.id !== id), documents: s.documents.map(d => d.folderId === id ? { ...d, folderId: null } : d) })),
+  updateFolder: async (id, updates) => {
+    set({ isLoading: true, error: null });
+    try {
+      const res = await axios.put(`/api/folders/${id}`, updates);
+      if (res.data.success) {
+        set((state) => ({
+          folders: state.folders.map((f) => (f.id === id ? res.data.data : f)),
+          isLoading: false
+        }));
+      } else {
+        throw new Error(res.data.error);
+      }
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+      throw err;
+    }
+  },
 
-      createDocument: (folderId = null, parentId = null, projectId = null, category: 'workflow' | 'note' | 'developer' | 'client' = 'note') => {
-        const { getOrCreateCategoryFolder } = get();
-        const targetFolderId = folderId ?? getOrCreateCategoryFolder(category, projectId);
-        
-        const doc: Doc = { id: uid(), folderId: targetFolderId, parentId: parentId ?? null, projectId: projectId ?? null, title: 'Untitled Document', content: JSON.stringify({ type: 'doc', content: [{ type: 'paragraph' }] }), category, emoji: '📄', tags: [], status: 'draft', isPinned: false, isFavorite: false, wordCount: 0, authorName: 'John Doe', authorAvatar: 'https://i.pravatar.cc/150?u=1', version: 1, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
-        set(s => ({ documents: [doc, ...s.documents], activeDocId: doc.id }));
+  deleteFolder: async (id) => {
+    set({ isLoading: true, error: null });
+    try {
+      const res = await axios.delete(`/api/folders/${id}`);
+      if (res.data.success) {
+        set((state) => ({
+          folders: state.folders.filter((f) => f.id !== id),
+          documents: state.documents.map((d) => (d.folderId === id ? { ...d, folderId: null } : d)),
+          isLoading: false
+        }));
+      } else {
+        throw new Error(res.data.error);
+      }
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+      throw err;
+    }
+  },
+
+  createDocument: async (folderId = null, parentId = null, projectId = null, category = 'teacher') => {
+    set({ isLoading: true, error: null });
+    try {
+      const { getOrCreateCategoryFolder } = get();
+      const targetFolderId = folderId ?? await getOrCreateCategoryFolder(category, projectId);
+      
+      const customId = Math.random().toString(36).slice(2, 11);
+      const res = await axios.post('/api/documents', {
+        id: customId,
+        folderId: targetFolderId,
+        parentId,
+        projectId,
+        title: 'Untitled Document',
+        content: JSON.stringify({ type: 'doc', content: [{ type: 'paragraph' }] }),
+        category,
+        emoji: '📄',
+        tags: [],
+        status: 'draft',
+        isPinned: false,
+        isFavorite: false,
+        wordCount: 0,
+        authorName: 'Veloc Support',
+        authorAvatar: 'https://i.pravatar.cc/150?u=1',
+        version: 1
+      });
+
+      if (res.data.success) {
+        const doc = res.data.data;
+        set((state) => ({
+          documents: [doc, ...state.documents],
+          activeDocId: doc.id,
+          isLoading: false
+        }));
         return doc;
-      },
-      updateDocument: (id, updates) => set(s => ({ documents: s.documents.map(d => d.id === id ? { ...d, ...updates, updatedAt: new Date().toISOString() } : d) })),
-      deleteDocument: (id) => {
+      } else {
+        throw new Error(res.data.error);
+      }
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+      throw err;
+    }
+  },
+
+  updateDocument: async (id, updates) => {
+    set({ isLoading: true, error: null });
+    try {
+      const res = await axios.put(`/api/documents/${id}`, updates);
+      if (res.data.success) {
+        set((state) => ({
+          documents: state.documents.map((d) => (d.id === id ? res.data.data : d)),
+          isLoading: false
+        }));
+      } else {
+        throw new Error(res.data.error);
+      }
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+      throw err;
+    }
+  },
+
+  deleteDocument: async (id) => {
+    set({ isLoading: true, error: null });
+    try {
+      const res = await axios.delete(`/api/documents/${id}`);
+      if (res.data.success) {
         const { documents, activeDocId } = get();
         
-        // Find all nested children recursively
-        const getChildren = (parentId: string): string[] => {
-          const children = documents.filter(d => d.parentId === parentId).map(d => d.id);
+        // Locally identify children deleted recursively by the backend to sync client state
+        const getChildren = (pId: string): string[] => {
+          const children = documents.filter(d => d.parentId === pId).map(d => d.id);
           return [...children, ...children.flatMap(getChildren)];
         };
         const idsToDelete = [id, ...getChildren(id)];
         
         const remaining = documents.filter(d => !idsToDelete.includes(d.id));
-        set({ documents: remaining, activeDocId: idsToDelete.includes(activeDocId || '') ? (remaining[0]?.id ?? null) : activeDocId });
-      },
-      setActiveDoc: (id) => set({ activeDocId: id }),
-      togglePin: (id: string) => set(s => ({ documents: s.documents.map(d => d.id === id ? { ...d, isPinned: !d.isPinned } : d) })),
-      toggleFavorite: (id) => set(s => ({ documents: s.documents.map(d => d.id === id ? { ...d, isFavorite: !d.isFavorite } : d) })),
-    }),
-    { name: 'nexus-documents' }
-  )
-);
+        set({
+          documents: remaining,
+          activeDocId: idsToDelete.includes(activeDocId || '') ? (remaining[0]?.id ?? null) : activeDocId,
+          isLoading: false
+        });
+      } else {
+        throw new Error(res.data.error);
+      }
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+      throw err;
+    }
+  },
+
+  setActiveDoc: (id) => set({ activeDocId: id }),
+
+  togglePin: async (id) => {
+    const { documents, updateDocument } = get();
+    const doc = documents.find(d => d.id === id);
+    if (doc) {
+      await updateDocument(id, { isPinned: !doc.isPinned });
+    }
+  },
+
+  toggleFavorite: async (id) => {
+    const { documents, updateDocument } = get();
+    const doc = documents.find(d => d.id === id);
+    if (doc) {
+      await updateDocument(id, { isFavorite: !doc.isFavorite });
+    }
+  }
+}));
