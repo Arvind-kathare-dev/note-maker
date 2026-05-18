@@ -35,8 +35,8 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Little Seeds | Enterprise Knowledge Platform",
-  description: "Next-gen documentation and project knowledge management platform.",
+  title: "Veloc Note Maker | Fast, Smart & Scalable Note Platform",
+  description: "Boost productivity with Veloc Note Maker – a modern platform for notes, documentation, and knowledge management.",
 };
 
 export default function RootLayout({
@@ -45,7 +45,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const fontVariables = `${inter.variable} ${outfit.variable} ${roboto.variable} ${playfair.variable} ${montserrat.variable} ${jetbrains.variable}`;
-  
+
   return (
     <html lang="en" className={`h-full ${fontVariables}`}>
       <body className="antialiased min-h-full flex flex-col">
