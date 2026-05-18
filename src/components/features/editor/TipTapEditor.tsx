@@ -16,7 +16,7 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import FontFamily from '@tiptap/extension-font-family';
 import Subscript from '@tiptap/extension-subscript';
 import Superscript from '@tiptap/extension-superscript';
-import Typography from '@tiptap/extension-typography';
+// Typography extension removed — its inputRules conflict with list item editing
 import { common, createLowlight } from 'lowlight';
 import { Table } from '@tiptap/extension-table';
 import TableHeader from '@tiptap/extension-table-header';
@@ -113,27 +113,16 @@ export default function TipTapEditor({ content, onChange, editable = true, place
     extensions: [
       StarterKit.configure({
         codeBlock: false,
-        // Exclude StarterKit's listItem so TaskItem (with nested support) takes over
-        listItem: false,
-        // Keep bulletList and orderedList from StarterKit
-        bulletList: {
-          keepMarks: true,
-          keepAttributes: true,
-        },
-        orderedList: {
-          keepMarks: true,
-          keepAttributes: true,
-        },
       }),
       Placeholder.configure({ placeholder: placeholder || 'Start writing… Type "/" for quick commands!' }),
       Underline,
-      Typography,
+      // Typography removed — interferes with list node structure via inputRules
       TextStyle,
       Color,
       FontFamily,
       Subscript,
       Superscript,
-      TextAlign.configure({ types: ['heading', 'paragraph', 'listItem', 'taskItem'] }),
+      TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Image.configure({ allowBase64: true, inline: false }),
       Link.configure({
         openOnClick: false,
@@ -378,8 +367,17 @@ export default function TipTapEditor({ content, onChange, editable = true, place
     editor.setEditable(editable && activeMode === 'rich');
   }, [editor, editable, activeMode]);
 
+  // Only sync external content changes after mount — never while user is actively typing
+  const didMountRef = useRef(false);
   useEffect(() => {
-    if (!editor || !content) return;
+    if (!editor) return;
+    if (!didMountRef.current) {
+      // First run: editor was initialized with content already, mark as mounted
+      didMountRef.current = true;
+      return;
+    }
+    // Subsequent runs: only sync if editor doesn't have focus (user isn't typing)
+    if (editor.isFocused) return;
     const parsed = safeParseJSON(content);
     if (parsed && JSON.stringify(editor.getJSON()) !== JSON.stringify(parsed)) {
       editor.commands.setContent(parsed, { emitUpdate: false });
