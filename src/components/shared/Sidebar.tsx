@@ -390,8 +390,6 @@ export default function Sidebar() {
                               <span className="text-[9px] text-primary font-extrabold truncate max-w-[80px]" title={project.category || 'School Based'}>
                                 {project.category || 'School Based'}
                               </span>
-                              <span className="text-[8px] text-slate-700 font-black">•</span>
-                              <span className="text-[9px] text-slate-500 font-bold">{project.version}</span>
                             </div>
                           </div>
                         )}

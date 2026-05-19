@@ -2,9 +2,9 @@
 
 import React from 'react';
 import { 
-  X, Moon, Sun, Monitor, Type, Palette, Check
+  X, Moon, Sun, Monitor, Type, Palette, Check, Sliders
 } from 'lucide-react';
-import { useThemeStore, ThemeMode, AccentColor, FontFamily } from '@/store/useThemeStore';
+import { useThemeStore, ThemeMode, AccentColor, FontFamily, FontSize } from '@/store/useThemeStore';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -14,7 +14,7 @@ interface SettingsModalProps {
 }
 
 export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
-  const { mode, accentColor, fontFamily, setMode, setAccentColor, setFontFamily } = useThemeStore();
+  const { mode, accentColor, fontFamily, fontSize, setMode, setAccentColor, setFontFamily, setFontSize } = useThemeStore();
 
   if (!isOpen) return null;
 
@@ -40,11 +40,8 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     { id: 'inter', label: 'Inter (Modern)' },
     { id: 'outfit', label: 'Outfit (Geometric)' },
     { id: 'roboto', label: 'Roboto (Clean)' },
-    { id: 'playfair', label: 'Playfair (Classic)' },
     { id: 'montserrat', label: 'Montserrat (Bold)' },
     { id: 'mono', label: 'Monospace' },
-    { id: 'lora', label: 'Lora (Elegant Serif)' },
-    { id: 'syne', label: 'Syne (Artistic)' },
   ];
 
   return (
@@ -131,6 +128,35 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 >
                   <span className="text-sm">{f.label}</span>
                   {fontFamily === f.id && <Check className="w-4 h-4" />}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Font Size (Global Text Scaling) */}
+          <div className="space-y-3">
+            <label className="text-xs font-bold uppercase tracking-widest flex items-center gap-2 opacity-60">
+              <Sliders className="w-4 h-4" /> Global Text Size
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {([
+                { id: 'sm', label: 'Small', sizeLabel: '14px' },
+                { id: 'base', label: 'Normal', sizeLabel: '16px' },
+                { id: 'lg', label: 'Large', sizeLabel: '18px' },
+                { id: 'xl', label: 'Extra Large', sizeLabel: '20px' }
+              ] as { id: FontSize; label: string; sizeLabel: string }[]).map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => setFontSize(s.id)}
+                  className={cn(
+                    "flex flex-col items-center justify-center p-3.5 rounded-xl border transition-all cursor-pointer text-center",
+                    fontSize === s.id 
+                      ? "border-primary bg-primary/5 text-primary" 
+                      : "border-border hover:bg-accent"
+                  )}
+                >
+                  <span className="text-xs font-bold">{s.label}</span>
+                  <span className="text-[10px] opacity-60 font-semibold">{s.sizeLabel}</span>
                 </button>
               ))}
             </div>

@@ -223,12 +223,6 @@ export default function LoginPage() {
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
               <span>Secure Cryptographic Access</span>
             </div>
-            <p className="text-center text-xs font-bold text-slate-500 uppercase">
-              No account?{' '}
-              <Link href="/register" className="font-extrabold text-emerald-400 hover:underline">
-                Register as Admin / Reader
-              </Link>
-            </p>
           </div>
 
         </div>

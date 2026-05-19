@@ -11,6 +11,7 @@ export interface ProjectPortalTheme {
   mode: 'dark' | 'light';
   accentColor: string;
   fontFamily: string;
+  fontSize?: 'sm' | 'base' | 'lg' | 'xl';
 }
 
 export interface Project {

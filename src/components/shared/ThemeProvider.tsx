@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { ReactNode, useEffect, useState } from 'react';
 
 export default function ThemeProvider({ children }: { children: ReactNode }) {
-  const { mode, accentColor, fontFamily } = useThemeStore();
+  const { mode, accentColor, fontFamily, fontSize } = useThemeStore();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
 
@@ -32,15 +32,22 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
     // Apply Accent
     root.setAttribute('data-accent', accentColor);
 
+    // Apply Font Size
+    const sizeMap: Record<string, string> = {
+      sm: '14px',
+      base: '16px',
+      lg: '18px',
+      xl: '20px',
+    };
+    root.style.fontSize = sizeMap[fontSize] || '16px';
+
     // Apply Font Variable for Editor and other components
     const fontMap: Record<string, string> = {
       inter: 'var(--font-inter)',
       outfit: 'var(--font-outfit)',
       roboto: 'var(--font-roboto)',
-      playfair: 'var(--font-playfair)',
       montserrat: 'var(--font-montserrat)',
       mono: 'var(--font-jetbrains)',
-      serif: 'var(--font-playfair)',
     };
     
     const primaryFont = `${fontMap[fontFamily] || 'var(--font-inter)'}, sans-serif`;
@@ -52,10 +59,10 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
     }
 
     // Apply Font Classes for Tailwind
-    document.body.classList.remove('font-inter', 'font-outfit', 'font-roboto', 'font-playfair', 'font-montserrat', 'font-mono', 'font-serif');
+    document.body.classList.remove('font-inter', 'font-outfit', 'font-roboto', 'font-montserrat', 'font-mono');
     document.body.classList.add(`font-${fontFamily}`);
     
-  }, [mode, accentColor, fontFamily, mounted, pathname]);
+  }, [mode, accentColor, fontFamily, fontSize, mounted, pathname]);
 
   if (!mounted) {
     return <>{children}</>;

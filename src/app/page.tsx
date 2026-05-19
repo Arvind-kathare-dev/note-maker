@@ -31,7 +31,7 @@ import { cn } from '@/lib/utils';
 // --- Types & Constants for the Sandbox ---
 type ThemeMode = 'dark' | 'light';
 type AccentColor = 'blue' | 'purple' | 'green' | 'rose' | 'orange' | 'mint' | 'crimson';
-type FontFamily = 'inter' | 'outfit' | 'playfair' | 'montserrat' | 'lora' | 'syne';
+type FontFamily = 'inter' | 'outfit' | 'montserrat';
 
 const ACCENTS: { id: AccentColor; label: string; colorClass: string; hex: string }[] = [
   { id: 'blue', label: 'Ocean Blue', colorClass: 'bg-blue-500', hex: '#6366f1' },
@@ -46,10 +46,7 @@ const ACCENTS: { id: AccentColor; label: string; colorClass: string; hex: string
 const FONTS: { id: FontFamily; label: string; classVar: string }[] = [
   { id: 'inter', label: 'Inter (Modern)', classVar: 'font-inter' },
   { id: 'outfit', label: 'Outfit (Geometric)', classVar: 'font-outfit' },
-  { id: 'playfair', label: 'Playfair (Classic)', classVar: 'font-playfair' },
   { id: 'montserrat', label: 'Montserrat (Bold)', classVar: 'font-montserrat' },
-  { id: 'lora', label: 'Lora (Elegant Serif)', classVar: 'font-lora' },
-  { id: 'syne', label: 'Syne (Artistic)', classVar: 'font-syne' },
 ];
 
 const WORKFLOW_STEPS = [
@@ -556,7 +553,7 @@ export default function LandingPage() {
               </div>
               <h3 className="text-lg font-black font-outfit text-foreground mb-2">Directory Overview</h3>
               <p className="text-xs text-muted-foreground leading-relaxed font-medium">
-                Clear dashboard cards displaying modules status, category metadata, document count, and version control tags.
+                Clear dashboard cards displaying modules status, category metadata, and document count.
               </p>
             </div>
           </div>

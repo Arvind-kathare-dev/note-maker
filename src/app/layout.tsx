@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Outfit, Roboto, Playfair_Display, Montserrat, JetBrains_Mono, Lora, Syne } from "next/font/google";
+import { Inter, Outfit, Roboto, Montserrat, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/shared/Providers";
 
@@ -19,11 +19,6 @@ const roboto = Roboto({
   subsets: ["latin"],
 });
 
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
-  subsets: ["latin"],
-});
-
 const montserrat = Montserrat({
   variable: "--font-montserrat",
   subsets: ["latin"],
@@ -31,16 +26,6 @@ const montserrat = Montserrat({
 
 const jetbrains = JetBrains_Mono({
   variable: "--font-jetbrains",
-  subsets: ["latin"],
-});
-
-const lora = Lora({
-  variable: "--font-lora",
-  subsets: ["latin"],
-});
-
-const syne = Syne({
-  variable: "--font-syne",
   subsets: ["latin"],
 });
 
@@ -54,7 +39,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const fontVariables = `${inter.variable} ${outfit.variable} ${roboto.variable} ${playfair.variable} ${montserrat.variable} ${jetbrains.variable} ${lora.variable} ${syne.variable}`;
+  const fontVariables = `${inter.variable} ${outfit.variable} ${roboto.variable} ${montserrat.variable} ${jetbrains.variable}`;
 
   return (
     <html lang="en" className={`h-full ${fontVariables}`}>

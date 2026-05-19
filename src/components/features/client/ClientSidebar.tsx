@@ -54,7 +54,7 @@ export default function ClientSidebar({ projectId, onClose }: ClientSidebarProps
           <div className="min-w-0">
             <p className="text-xs font-black text-foreground font-outfit uppercase tracking-wider truncate">{project?.name}</p>
             <p className="text-[9px] text-primary font-bold uppercase tracking-widest leading-none mt-0.5 truncate">
-              {project?.category || 'Documentation'} · {project?.version}
+              {project?.category || 'Documentation'}
             </p>
           </div>
         </div>
@@ -140,7 +140,7 @@ export default function ClientSidebar({ projectId, onClose }: ClientSidebarProps
       {/* Footer: Version info */}
       <div className="px-5 py-3 border-t border-border/20 shrink-0">
         <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50 text-center">
-          {project?.name} · {project?.version} · Powered by Veloc
+          {project?.name} · Powered by Veloc
         </p>
       </div>
     </div>

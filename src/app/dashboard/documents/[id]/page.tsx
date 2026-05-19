@@ -140,7 +140,6 @@ function InfoPanel({ doc, onClose, onUpdate, sections = [] }: {
           <p className="text-[10px] font-black text-muted-foreground/80 uppercase tracking-wider">Document Details</p>
           {[
             { icon: FileText, label: 'Word count', value: `${doc.wordCount} words` },
-            { icon: Hash,     label: 'Version',    value: `v${doc.version}` },
             { icon: User2,    label: 'Author',     value: doc.authorName },
             { icon: Calendar, label: 'Created',    value: format(new Date(doc.createdAt), 'MMM d, yyyy') },
             { icon: ClockIcon,   label: 'Updated',    value: format(new Date(doc.updatedAt), 'MMM d, HH:mm') },
@@ -279,7 +278,6 @@ export default function DocumentPage() {
   };
 
   const handleSave = () => {
-    updateDocument(doc.id, { version: doc.version + 1 });
     setSaving(true);
     setSaved(false);
     setTimeout(() => {
@@ -380,7 +378,7 @@ export default function DocumentPage() {
     </head><body>
       <h1>${doc.title || 'Untitled'}</h1>
       <div class="meta">
-        ${doc.authorName} &nbsp;·&nbsp; ${new Date(doc.updatedAt).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })} &nbsp;·&nbsp; v${doc.version} &nbsp;·&nbsp; ${doc.wordCount} words
+        ${doc.authorName} &nbsp;·&nbsp; ${new Date(doc.updatedAt).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })} &nbsp;·&nbsp; ${doc.wordCount} words
       </div>
       ${bodyContent}
       <script>
@@ -600,10 +598,9 @@ export default function DocumentPage() {
             </div>
             
             {/* Bottom Footer */}
-            <div className="pt-8 border-t border-border/20 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs text-muted-foreground font-bold">
-              <span>Last updated on {format(new Date(doc.updatedAt), 'MMMM d, yyyy')}</span>
+            <div className="pt-8 border-t border-border/20 flex items-center justify-center text-xs text-muted-foreground font-bold">
               <div className="flex items-center gap-1">
-                <span>made with ❤️ by</span>
+                <span>Made with ❤️ by</span>
                 <span className="text-foreground hover:text-primary transition-colors font-black">Veloc</span>
               </div>
             </div>

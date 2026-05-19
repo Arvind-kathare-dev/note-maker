@@ -77,6 +77,7 @@ export default function ClientPortalLayout({ children }: { children: React.React
     const mode       = project.portalTheme?.mode        || 'dark';
     const accentColor = project.portalTheme?.accentColor || 'blue';
     const fontFamily = project.portalTheme?.fontFamily   || 'inter';
+    const fontSize   = project.portalTheme?.fontSize    || 'base';
 
     const root = document.documentElement;
 
@@ -98,24 +99,29 @@ export default function ClientPortalLayout({ children }: { children: React.React
       root.setAttribute('data-accent', accentColor);
     }
 
+    // ── Font size ────────────────────────────────────────────────────────────
+    const sizeMap: Record<string, string> = {
+      sm: '14px',
+      base: '16px',
+      lg: '18px',
+      xl: '20px'
+    };
+    root.style.fontSize = sizeMap[fontSize] || '16px';
+
     // ── Font family ───────────────────────────────────────────────────────────
     const fontMap: Record<string, string> = {
       inter:       'var(--font-inter)',
       outfit:      'var(--font-outfit)',
       roboto:      'var(--font-roboto)',
-      playfair:    'var(--font-playfair)',
       montserrat:  'var(--font-montserrat)',
       mono:        'var(--font-jetbrains)',
-      lora:        'var(--font-lora)',
-      syne:        'var(--font-syne)',
     };
     const fontVar = fontMap[fontFamily] ?? 'var(--font-inter)';
     root.style.setProperty('--font-primary', `${fontVar}, sans-serif`);
     document.body.style.fontFamily = `${fontVar}, sans-serif`;
     document.body.classList.remove(
       'font-inter', 'font-outfit', 'font-roboto',
-      'font-playfair', 'font-montserrat', 'font-mono',
-      'font-lora', 'font-syne'
+      'font-montserrat', 'font-mono'
     );
     document.body.classList.add(`font-${fontFamily}`);
 
@@ -123,6 +129,7 @@ export default function ClientPortalLayout({ children }: { children: React.React
     return () => {
       root.classList.add('dark');
       root.setAttribute('data-accent', 'blue');
+      root.style.fontSize = '';
       root.style.removeProperty('--font-primary');
       root.style.removeProperty('--accent-primary');
       root.style.removeProperty('--accent-foreground');

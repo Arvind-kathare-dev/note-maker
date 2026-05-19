@@ -6,7 +6,7 @@ import {
   Plus, FileText, Folder, Search, MoreHorizontal, ArrowLeft,
   Trash2, Edit3, BookOpen, Code2, Workflow, Users2, Star, Clock,
   ChevronRight, FolderPlus, StickyNote, X, FileCheck, GraduationCap, Users,
-  ShieldAlert, Backpack, Briefcase, ChevronDown, Palette, Sun, Moon, Type, Check
+  ShieldAlert, Backpack, Briefcase, ChevronDown, Palette, Sun, Moon, Type, Check, Sliders
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,18 +48,15 @@ const FONT_OPTIONS = [
   { value: 'inter',       label: 'Inter',       preview: 'Aa' },
   { value: 'outfit',      label: 'Outfit',      preview: 'Aa' },
   { value: 'roboto',      label: 'Roboto',      preview: 'Aa' },
-  { value: 'playfair',    label: 'Playfair',    preview: 'Aa' },
   { value: 'montserrat',  label: 'Montserrat',  preview: 'Aa' },
   { value: 'mono',        label: 'Mono',        preview: 'Aa' },
-  { value: 'lora',        label: 'Lora Serif',  preview: 'Aa' },
-  { value: 'syne',        label: 'Syne Art',    preview: 'Aa' },
 ];
 
 // ── Portal Theme Modal ───────────────────────────────────────────────────────
 function PortalThemeModal({ project, onClose }: { project: any; onClose: () => void }) {
   const { updateProject } = useProjectStore();
-  const existing = project.portalTheme || { mode: 'dark', accentColor: 'blue', fontFamily: 'inter' };
-  const [theme, setTheme] = useState<ProjectPortalTheme>(existing);
+  const existing = project.portalTheme || { mode: 'dark', accentColor: 'blue', fontFamily: 'inter', fontSize: 'base' };
+  const [theme, setTheme] = useState<ProjectPortalTheme>({ fontSize: 'base', ...existing });
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -211,6 +208,36 @@ function PortalThemeModal({ project, onClose }: { project: any; onClose: () => v
             </div>
           </div>
 
+          {/* Font Size */}
+          <div className="space-y-2">
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+              <Sliders className="w-3 h-3" /> Font Size
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              {([
+                { value: 'sm', label: 'Small', details: '14px' },
+                { value: 'base', label: 'Normal', details: '16px' },
+                { value: 'lg', label: 'Large', details: '18px' },
+                { value: 'xl', label: 'Extra', details: '20px' }
+              ] as const).map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setTheme(t => ({ ...t, fontSize: opt.value }))}
+                  className={cn(
+                    'px-2 py-2 rounded-xl border text-xs font-bold transition-all text-center flex flex-col items-center justify-center hover:shadow-xs hover:border-primary/20 cursor-pointer',
+                    (theme.fontSize || 'base') === opt.value
+                      ? 'bg-primary/10 border-primary text-primary font-black'
+                      : 'border-border hover:bg-accent text-muted-foreground'
+                  )}
+                >
+                  <span>{opt.label}</span>
+                  <span className="text-[9px] font-normal opacity-65 mt-0.5">{opt.details}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Live preview chip */}
           <div
             className="flex items-center gap-3 p-4 rounded-2xl border border-border bg-accent/5 relative overflow-hidden text-left"
@@ -233,7 +260,7 @@ function PortalThemeModal({ project, onClose }: { project: any; onClose: () => v
             <div className="flex-1 min-w-0">
               <p className={cn('text-xs font-black uppercase tracking-wider truncate', theme.mode === 'dark' ? 'text-slate-100' : 'text-slate-900')}>{project.name}</p>
               <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-wide mt-0.5">
-                {theme.mode === 'dark' ? '🌙 Dark Mode' : '☀️ Light Mode'} • {theme.accentColor.startsWith('#') ? `Custom (${theme.accentColor})` : ACCENT_OPTIONS.find(a => a.value === theme.accentColor)?.label} • {FONT_OPTIONS.find(f => f.value === theme.fontFamily)?.label}
+                {theme.mode === 'dark' ? '🌙 Dark' : '☀️ Light'} • {theme.accentColor.startsWith('#') ? `Custom (${theme.accentColor})` : ACCENT_OPTIONS.find(a => a.value === theme.accentColor)?.label} • {FONT_OPTIONS.find(f => f.value === theme.fontFamily)?.label} • Size: {theme.fontSize || 'base'}
               </p>
             </div>
             <div 

@@ -10,6 +10,7 @@ export interface IPortalTheme {
   mode: 'dark' | 'light';
   accentColor: string;
   fontFamily: string;
+  fontSize?: 'sm' | 'base' | 'lg' | 'xl';
 }
 
 export interface IProject extends Document {
@@ -46,6 +47,7 @@ const ProjectSchema: Schema = new Schema(
       mode: { type: String, default: 'dark' },
       accentColor: { type: String, default: 'blue' },
       fontFamily: { type: String, default: 'inter' },
+      fontSize: { type: String, default: 'base' },
     },
   },
   { timestamps: true }

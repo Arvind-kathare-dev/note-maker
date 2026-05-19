@@ -3,15 +3,18 @@ import { persist } from 'zustand/middleware';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 export type AccentColor = 'blue' | 'purple' | 'green' | 'amber' | 'rose' | 'slate' | 'orange' | 'mint' | 'crimson';
-export type FontFamily = 'inter' | 'outfit' | 'roboto' | 'playfair' | 'montserrat' | 'mono' | 'serif' | 'lora' | 'syne';
+export type FontFamily = 'inter' | 'outfit' | 'roboto' | 'montserrat' | 'mono';
+export type FontSize = 'sm' | 'base' | 'lg' | 'xl';
 
 interface ThemeStore {
   mode: ThemeMode;
   accentColor: AccentColor;
   fontFamily: FontFamily;
+  fontSize: FontSize;
   setMode: (mode: ThemeMode) => void;
   setAccentColor: (color: AccentColor) => void;
   setFontFamily: (font: FontFamily) => void;
+  setFontSize: (size: FontSize) => void;
 }
 
 export const useThemeStore = create<ThemeStore>()(
@@ -20,9 +23,11 @@ export const useThemeStore = create<ThemeStore>()(
       mode: 'light',
       accentColor: 'blue',
       fontFamily: 'inter',
+      fontSize: 'base',
       setMode: (mode) => set({ mode }),
       setAccentColor: (accentColor) => set({ accentColor }),
       setFontFamily: (fontFamily) => set({ fontFamily }),
+      setFontSize: (fontSize) => set({ fontSize }),
     }),
     {
       name: 'nexus-theme',

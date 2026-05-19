@@ -301,11 +301,6 @@ export default function DashboardPage() {
                           <span className="text-[8px] font-black text-primary uppercase bg-primary/10 px-2 py-0.5 rounded-lg border border-primary/20">
                             {project.category || 'School Based'}
                           </span>
-                          {project.version && (
-                            <span className="text-[8px] font-black text-slate-500 dark:text-slate-400 uppercase bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded-lg border border-border/50">
-                              {project.version}
-                            </span>
-                          )}
                         </div>
                       </div>
 
