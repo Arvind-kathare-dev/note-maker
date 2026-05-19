@@ -34,6 +34,17 @@ import { useProjectStore, getProjectSections } from '@/store/useProjectStore';
 import { useDocumentStore, Doc } from '@/store/useDocumentStore';
 import SettingsModal from './SettingsModal';
 import ProjectModal from './ProjectModal';
+import { Select } from '@/components/ui/select';
+
+const SECTION_ICON_OPTIONS = [
+  { emoji: 'GraduationCap', label: '🎓' },
+  { emoji: 'ShieldAlert', label: '🛡️' },
+  { emoji: 'Backpack', label: '🎒' },
+  { emoji: 'Code2', label: '💻' },
+  { emoji: 'Briefcase', label: '💼' },
+  { emoji: 'Users2', label: '👥' },
+  { emoji: 'BookOpen', label: '📝' }
+].map(opt => ({ value: opt.emoji, label: opt.label }));
 
 type ClientRole = string;
 
@@ -74,6 +85,10 @@ export default function Sidebar() {
   // Project Creation Modal state
   const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
   
+  // Section edit states
+  const [openSectionMenuId, setOpenSectionMenuId] = useState<string | null>(null);
+  const [editingSection, setEditingSection] = useState<{ projectId: string, sectionId: string, label: string, icon: string } | null>(null);
+
   const [isSectionsConfigOpen, setIsSectionsConfigOpen] = useState(false);
   const [selectedProjectForConfig, setSelectedProjectForConfig] = useState<any>(null);
   const [configCustomSections, setConfigCustomSections] = useState<Array<{ id: string; label: string; icon: string }>>([]);
@@ -257,17 +272,28 @@ export default function Sidebar() {
         {/* Unified Project & Document Navigation Tree */}
         <div className="flex-1 overflow-y-auto py-4 px-3 space-y-5 scrollbar-thin">
           
-          {/* Dashboard Overview */}
-          <div className="space-y-1">
-             <Link href="/dashboard">
-              <div className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-lg transition-all group cursor-pointer text-xs font-bold uppercase tracking-wider",
-                pathname === '/dashboard' ? "bg-primary/10 text-primary font-extrabold" : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-              )}>
-                <LayoutDashboard className="w-4 h-4 shrink-0" />
-                {!isCollapsed && <span>Dashboard Overview</span>}
-              </div>
-             </Link>
+           {/* Dashboard Link */}
+           <div className="space-y-1">
+              <Link href="/dashboard">
+               <div className={cn(
+                 "flex items-center gap-3 px-3 py-2 rounded-lg transition-all group cursor-pointer text-xs font-bold uppercase tracking-wider",
+                 pathname === '/dashboard' ? "bg-primary/10 text-primary font-extrabold" : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+               )}>
+                 <LayoutDashboard className="w-4 h-4 shrink-0" />
+                 {!isCollapsed && <span>Dashboard</span>}
+               </div>
+              </Link>
+             {isAdmin && (
+               <Link href="/dashboard/clients">
+                <div className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg transition-all group cursor-pointer text-xs font-bold uppercase tracking-wider",
+                  pathname === '/dashboard/clients' ? "bg-primary/10 text-primary font-extrabold" : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                )}>
+                  <Users2 className="w-4 h-4 shrink-0" />
+                  {!isCollapsed && <span>Manage Clients</span>}
+                </div>
+               </Link>
+             )}
           </div>
 
           {/* Projects and their Created Docs underneath! */}
@@ -283,7 +309,7 @@ export default function Sidebar() {
                       setIsCreateProjectOpen(true);
                     }}
                     className="p-0.5 hover:bg-accent rounded text-primary transition-all cursor-pointer"
-                    title="Create new project workspace"
+                    title="Create New Module"
                   >
                     <Plus className="w-3.5 h-3.5" />
                   </button>
@@ -371,9 +397,9 @@ export default function Sidebar() {
                         )}
                       </div>
                       {!isCollapsed && (
-                        <div className="flex items-center gap-1.5 shrink-0" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center gap-1.5 shrink-0">
                           {isAdmin && (
-                            <div className="relative flex items-center justify-center">
+                            <div className="relative flex items-center justify-center" onClick={e => e.stopPropagation()}>
                               <button
                                 onClick={() => {
                                   setOpenProjectMenuId(openProjectMenuId === project.id ? null : project.id);
@@ -498,30 +524,53 @@ export default function Sidebar() {
 
                                 {/* Inline creators ONLY for Veloc Admin */}
                                 {isAdmin && (
-                                  <div className="flex items-center gap-1 opacity-0 group-hover/cat:opacity-100 transition-opacity">
+                                  <div className="flex items-center gap-1 opacity-0 group-hover/cat:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
                                     <button
                                       onClick={() => handleNewDoc(role)}
-                                      className="p-0.5 hover:bg-accent rounded text-primary transition-all"
+                                      className="p-0.5 hover:bg-accent rounded text-primary transition-all cursor-pointer"
                                       title="Add manual"
                                     >
                                       <Plus className="w-3 h-3" />
                                     </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleOpenSectionsConfig(project)}
-                                      className="p-0.5 hover:bg-accent rounded text-amber-550 transition-all cursor-pointer"
-                                      title="Edit sections"
-                                    >
-                                      <Edit3 className="w-3 h-3" />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleDeleteSection(project.id, role)}
-                                      className="p-0.5 hover:bg-accent rounded text-rose-500 transition-all cursor-pointer"
-                                      title="Delete this section"
-                                    >
-                                      <Trash2 className="w-3 h-3" />
-                                    </button>
+                                    
+                                    {/* 3-dots menu for Section */}
+                                    <div className="relative flex items-center justify-center">
+                                      <button
+                                        onClick={() => {
+                                          setOpenSectionMenuId(openSectionMenuId === `${project.id}_${role}` ? null : `${project.id}_${role}`);
+                                        }}
+                                        className="p-0.5 hover:bg-accent rounded text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+                                        title="Section settings"
+                                      >
+                                        <MoreVertical className="w-3 h-3" />
+                                      </button>
+                                      
+                                      {openSectionMenuId === `${project.id}_${role}` && (
+                                        <>
+                                          <div className="fixed inset-0 z-40" onClick={() => setOpenSectionMenuId(null)} />
+                                          <div className="absolute right-0 top-full mt-1 z-50 bg-card border border-border rounded-xl shadow-2xl py-1 min-w-[130px] animate-in fade-in zoom-in-95 text-foreground text-left">
+                                            <button 
+                                              onClick={() => { 
+                                                setEditingSection({ projectId: project.id, sectionId: role, label: section.label, icon: section.icon || 'BookOpen' });
+                                                setOpenSectionMenuId(null); 
+                                              }} 
+                                              className="flex items-center gap-2 w-full text-left px-3 py-2 text-[10px] font-bold hover:bg-accent text-primary transition-all cursor-pointer border-b border-border/40 pb-2"
+                                            >
+                                              <Edit3 className="w-3 h-3 text-primary" /> Edit Section
+                                            </button>
+                                            <button 
+                                              onClick={() => { 
+                                                handleDeleteSection(project.id, role); 
+                                                setOpenSectionMenuId(null); 
+                                              }} 
+                                              className="flex items-center gap-2 w-full text-left px-3 py-2 text-[10px] font-bold hover:bg-rose-500/10 text-rose-500 cursor-pointer mt-1"
+                                            >
+                                              <Trash2 className="w-3 h-3" /> Delete
+                                            </button>
+                                          </div>
+                                        </>
+                                      )}
+                                    </div>
                                   </div>
                                 )}
                               </div>
@@ -734,13 +783,23 @@ export default function Sidebar() {
             </Button>
           )}
           
-          {!isCollapsed && (
+          {!isCollapsed ? (
             <div className="px-2 pt-2">
                <button 
                 onClick={() => setIsCollapsed(true)}
                 className="w-full py-1 text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-primary transition-colors flex items-center justify-center gap-2 cursor-pointer"
                >
                  <ChevronRight className="w-3 h-3 rotate-180" /> Collapse Sidebar
+               </button>
+            </div>
+          ) : (
+            <div className="px-2 pt-2">
+               <button 
+                onClick={() => setIsCollapsed(false)}
+                className="w-full py-1 text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-primary transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                title="Expand Sidebar"
+               >
+                 <ChevronRight className="w-3 h-3" />
                </button>
             </div>
           )}
@@ -796,26 +855,13 @@ export default function Sidebar() {
                   {configCustomSections.map((section, idx) => (
                     <div key={section.id} className="flex items-center gap-3 bg-card border border-border p-3 rounded-2xl hover:border-primary/45 hover:shadow-lg transition-all group/item">
                       <div className="relative shrink-0">
-                        <select
-                          value={section.icon}
-                          onChange={e => handleUpdateConfigSectionIcon(section.id, e.target.value)}
-                          className="appearance-none bg-background border border-border hover:border-border/80 focus:border-primary/50 rounded-xl pl-3 pr-6 py-2 text-sm focus:outline-none cursor-pointer w-14 transition-all text-center"
-                        >
-                          {[
-                            { emoji: 'GraduationCap', label: '🎓' },
-                            { emoji: 'ShieldAlert', label: '🛡️' },
-                            { emoji: 'Backpack', label: '🎒' },
-                            { emoji: 'Code2', label: '💻' },
-                            { emoji: 'Briefcase', label: '💼' },
-                            { emoji: 'Users2', label: '👥' },
-                            { emoji: 'BookOpen', label: '📝' }
-                          ].map(opt => (
-                            <option key={opt.emoji} value={opt.emoji}>{opt.label}</option>
-                          ))}
-                        </select>
-                        <div className="pointer-events-none absolute inset-y-0 right-1.5 flex items-center text-muted-foreground">
-                          <ChevronDown className="w-3 h-3" />
-                        </div>
+                    <Select
+                      value={section.icon}
+                      onChange={val => handleUpdateConfigSectionIcon(section.id, val)}
+                      options={SECTION_ICON_OPTIONS}
+                      className="w-18"
+                      triggerClassName="h-9 px-2 rounded-xl"
+                    />
                       </div>
 
                       <div className="flex-1 min-w-0">
@@ -868,6 +914,82 @@ export default function Sidebar() {
           </div>
         </div>
       )}
+
+      {editingSection && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 select-none animate-in fade-in duration-200">
+          <div className="bg-card border border-border rounded-3xl p-6 w-full max-w-md space-y-6 text-left shadow-2xl relative">
+            <button 
+              onClick={() => setEditingSection(null)}
+              className="absolute right-4 top-4 text-muted-foreground hover:text-foreground cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            
+            <div className="space-y-1">
+              <h3 className="text-lg font-black text-foreground font-outfit uppercase tracking-wider">Edit Section</h3>
+              <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Modify section name and icon</p>
+            </div>
+
+            <form 
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const { projectId, sectionId, label, icon } = editingSection;
+                const project = projects.find(p => p.id === projectId);
+                if (!project) return;
+                
+                const updatedSections = (project.sections || []).map((s: any) => 
+                  s.id === sectionId ? { ...s, label: label.trim(), icon } : s
+                );
+                
+                await updateProject(projectId, { sections: updatedSections });
+                setEditingSection(null);
+              }} 
+              className="space-y-5"
+            >
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Section Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingSection.label}
+                    onChange={e => setEditingSection(prev => prev ? { ...prev, label: e.target.value } : null)}
+                    placeholder="Enter section name..."
+                    className="w-full bg-background border border-border hover:border-border/80 focus:border-primary/45 focus:bg-background rounded-xl px-3 py-2 text-xs font-bold text-foreground focus:outline-none transition-all placeholder:text-muted-foreground/45"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Section Icon</label>
+                  <Select
+                    value={editingSection.icon}
+                    onChange={val => setEditingSection(prev => prev ? { ...prev, icon: val } : null)}
+                    options={SECTION_ICON_OPTIONS}
+                    className="w-full"
+                    triggerClassName="h-10 px-3 rounded-xl text-xs font-bold bg-background border border-border"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingSection(null)}
+                  className="flex-1 h-11 rounded-xl border border-border text-xs font-bold hover:bg-accent transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 h-11 bg-primary text-primary-foreground hover:bg-primary/95 rounded-xl text-xs font-black uppercase tracking-wider shadow-lg shadow-primary/10 transition-all cursor-pointer"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -902,8 +1024,8 @@ function DocLinkItem({
         className={cn(
           'group flex items-center justify-between py-1 px-2.5 rounded-lg text-[10px] font-semibold transition-all cursor-pointer relative',
           active 
-            ? `bg-slate-800/50 ${activeLinkStyle} font-bold` 
-            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/20'
+            ? `bg-primary/10 text-primary font-bold` 
+            : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent'
         )}
         style={{ paddingLeft: `${10 + level * 12}px` }}
         onClick={handleSelect}
@@ -916,7 +1038,7 @@ function DocLinkItem({
             onKeyDown={e => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') commitRename(); }}
             onBlur={commitRename}
             onClick={e => e.stopPropagation()}
-            className="flex-1 bg-transparent border-b border-primary/50 text-[10px] font-bold focus:outline-none min-w-0 py-0.5 text-slate-900 dark:text-slate-100"
+            className="flex-1 bg-transparent border-b border-primary/50 text-[10px] font-bold focus:outline-none min-w-0 py-0.5 text-foreground"
           />
         ) : (
           <span className="flex-1 truncate select-none text-[10.5px]">{doc.title}</span>
@@ -924,21 +1046,21 @@ function DocLinkItem({
 
         {!isRenaming && isAdmin && (
           <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 ml-2 shrink-0" onClick={e => e.stopPropagation()}>
-            <button onClick={() => setShowMenu(o => !o)} className="p-0.5 hover:bg-slate-800 rounded text-slate-400 hover:text-slate-200 transition-all">
+            <button onClick={() => setShowMenu(o => !o)} className="p-0.5 hover:bg-accent rounded text-muted-foreground hover:text-foreground transition-all">
               <MoreVertical className="w-3 h-3" />
             </button>
             
             {showMenu && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-                <div className="absolute right-0 top-full mt-1 z-50 bg-[#0d1527] border border-border/80 rounded-xl shadow-2xl py-1 min-w-[130px] text-slate-300">
-                  <button onClick={() => { onRename(doc); setShowMenu(false); }} className="flex items-center gap-2 w-full text-left px-3 py-1.5 text-[10px] font-bold hover:bg-slate-800 text-slate-200 transition-all">
+                <div className="absolute right-0 top-full mt-1 z-50 bg-popover border border-border rounded-xl shadow-2xl py-1 min-w-[130px] text-popover-foreground">
+                  <button onClick={() => { onRename(doc); setShowMenu(false); }} className="flex items-center gap-2 w-full text-left px-3 py-1.5 text-[10px] font-bold hover:bg-accent text-foreground transition-all">
                     <Edit3 className="w-3 h-3" /> Rename
                   </button>
-                  <button onClick={() => { togglePin(doc.id); setShowMenu(false); }} className="flex items-center gap-2 w-full text-left px-3 py-1.5 text-[10px] font-bold hover:bg-slate-800 text-slate-200 transition-all">
+                  <button onClick={() => { togglePin(doc.id); setShowMenu(false); }} className="flex items-center gap-2 w-full text-left px-3 py-1.5 text-[10px] font-bold hover:bg-accent text-foreground transition-all">
                     <Pin className="w-3 h-3 rotate-45" /> {doc.isPinned ? 'Unpin' : 'Pin'}
                   </button>
-                  <button onClick={() => { toggleFavorite(doc.id); setShowMenu(false); }} className="flex items-center gap-2 w-full text-left px-3 py-1.5 text-[10px] font-bold hover:bg-slate-800 text-slate-200 transition-all">
+                  <button onClick={() => { toggleFavorite(doc.id); setShowMenu(false); }} className="flex items-center gap-2 w-full text-left px-3 py-1.5 text-[10px] font-bold hover:bg-accent text-foreground transition-all">
                     <Star className="w-3 h-3" /> {doc.isFavorite ? 'Unfavorite' : 'Favorite'}
                   </button>
                   <div className="border-t border-border/30 mt-1 pt-1">

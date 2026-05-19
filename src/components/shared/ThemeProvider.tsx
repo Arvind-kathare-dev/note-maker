@@ -1,10 +1,12 @@
 'use client';
 
 import { useThemeStore } from '@/store/useThemeStore';
+import { usePathname } from 'next/navigation';
 import { ReactNode, useEffect, useState } from 'react';
 
 export default function ThemeProvider({ children }: { children: ReactNode }) {
   const { mode, accentColor, fontFamily } = useThemeStore();
+  const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -13,6 +15,10 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!mounted) return;
+
+    // ⛔ Don't touch the DOM on client portal routes — the portal layout
+    //    manages its own per-project theme via a separate useEffect.
+    if (pathname?.startsWith('/client/')) return;
 
     const root = window.document.documentElement;
     
@@ -49,7 +55,7 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
     document.body.classList.remove('font-inter', 'font-outfit', 'font-roboto', 'font-playfair', 'font-montserrat', 'font-mono', 'font-serif');
     document.body.classList.add(`font-${fontFamily}`);
     
-  }, [mode, accentColor, fontFamily, mounted]);
+  }, [mode, accentColor, fontFamily, mounted, pathname]);
 
   if (!mounted) {
     return <>{children}</>;

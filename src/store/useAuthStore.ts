@@ -3,12 +3,16 @@ import { persist } from 'zustand/middleware';
 import { User, UserPreferences } from '../types';
 import axios from 'axios';
 
+export interface AuthUser extends User {
+  assignedProjectId?: string | null;
+}
+
 interface AuthState {
-  user: User | null;
+  user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
-  login: (email: string) => Promise<void>;
+  login: (email: string, password?: string) => Promise<void>;
   register: (name: string, email: string) => Promise<void>;
   logout: () => void;
   updateProfile: (name: string, email: string, avatar: string) => Promise<void>;
@@ -23,10 +27,10 @@ export const useAuthStore = create<AuthState>()(
       isLoading: false,
       error: null,
 
-      login: async (email: string) => {
+      login: async (email: string, password?: string) => {
         set({ isLoading: true, error: null });
         try {
-          const res = await axios.post('/api/auth/login', { email });
+          const res = await axios.post('/api/auth/login', { email, password });
           if (res.data.success) {
             set({ user: res.data.data, isAuthenticated: true, isLoading: false });
           } else {

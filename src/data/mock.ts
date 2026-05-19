@@ -12,7 +12,7 @@ export const mockProjects: Project[] = [
   {
     id: 'p1',
     workspaceId: 'w1',
-    name: 'Nexus Platform v1',
+    name: 'Veloc Platform v1',
     description: 'Enterprise documentation platform development.',
     status: 'ACTIVE',
     category: 'Software Development',
@@ -45,7 +45,7 @@ export const mockDocuments: Document[] = [
     projectId: 'p1',
     categoryId: 'c1',
     title: 'Architecture Overview',
-    content: '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Welcome to the Nexus Platform architecture guide."}]}]}',
+    content: '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Welcome to the Veloc Platform architecture guide."}]}]}',
     authorId: '1',
     status: 'PUBLISHED',
     isPrivate: false,

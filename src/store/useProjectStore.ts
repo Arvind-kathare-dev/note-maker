@@ -7,6 +7,12 @@ export interface ProjectSection {
   icon?: string;
 }
 
+export interface ProjectPortalTheme {
+  mode: 'dark' | 'light';
+  accentColor: string;
+  fontFamily: string;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -17,6 +23,7 @@ export interface Project {
   category?: string;
   createdAt: string;
   sections?: ProjectSection[];
+  portalTheme?: ProjectPortalTheme;
   sectionLabels?: {
     teacher?: string;
     admin?: string;

@@ -6,19 +6,263 @@ import {
   Plus, FileText, Folder, Search, MoreHorizontal, ArrowLeft,
   Trash2, Edit3, BookOpen, Code2, Workflow, Users2, Star, Clock,
   ChevronRight, FolderPlus, StickyNote, X, FileCheck, GraduationCap, Users,
-  ShieldAlert, Backpack, Briefcase, ChevronDown
+  ShieldAlert, Backpack, Briefcase, ChevronDown, Palette, Sun, Moon, Type, Check
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { useProjectStore } from '@/store/useProjectStore';
+import { useProjectStore, ProjectPortalTheme } from '@/store/useProjectStore';
 import { useDocumentStore, Doc } from '@/store/useDocumentStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import { Select } from '@/components/ui/select';
+
+const SECTION_ICON_OPTIONS = [
+  { emoji: 'GraduationCap', label: '🎓' },
+  { emoji: 'ShieldAlert', label: '🛡️' },
+  { emoji: 'Backpack', label: '🎒' },
+  { emoji: 'Code2', label: '💻' },
+  { emoji: 'Briefcase', label: '💼' },
+  { emoji: 'Users2', label: '👥' },
+  { emoji: 'BookOpen', label: '📝' }
+].map(opt => ({ value: opt.emoji, label: opt.label }));
 
 type Tab = 'docs' | 'recent';
+
+// ── Accent palette (matches global CSS data-accent values) ───────────────────
+const ACCENT_OPTIONS = [
+  { value: 'blue',    label: 'Ocean Blue',   dot: 'bg-blue-500' },
+  { value: 'purple',  label: 'Royal Purple', dot: 'bg-purple-500' },
+  { value: 'green',   label: 'Forest Green', dot: 'bg-emerald-500' },
+  { value: 'rose',    label: 'Rose Red',     dot: 'bg-rose-500' },
+  { value: 'amber',   label: 'Amber Gold',   dot: 'bg-amber-500' },
+  { value: 'cyan',    label: 'Cyan Teal',    dot: 'bg-cyan-500' },
+  { value: 'orange',  label: 'Sunset Orange', dot: 'bg-orange-500' },
+  { value: 'mint',    label: 'Emerald Mint',  dot: 'bg-teal-400' },
+  { value: 'crimson', label: 'Crimson Red',  dot: 'bg-rose-800' },
+];
+
+const FONT_OPTIONS = [
+  { value: 'inter',       label: 'Inter',       preview: 'Aa' },
+  { value: 'outfit',      label: 'Outfit',      preview: 'Aa' },
+  { value: 'roboto',      label: 'Roboto',      preview: 'Aa' },
+  { value: 'playfair',    label: 'Playfair',    preview: 'Aa' },
+  { value: 'montserrat',  label: 'Montserrat',  preview: 'Aa' },
+  { value: 'mono',        label: 'Mono',        preview: 'Aa' },
+  { value: 'lora',        label: 'Lora Serif',  preview: 'Aa' },
+  { value: 'syne',        label: 'Syne Art',    preview: 'Aa' },
+];
+
+// ── Portal Theme Modal ───────────────────────────────────────────────────────
+function PortalThemeModal({ project, onClose }: { project: any; onClose: () => void }) {
+  const { updateProject } = useProjectStore();
+  const existing = project.portalTheme || { mode: 'dark', accentColor: 'blue', fontFamily: 'inter' };
+  const [theme, setTheme] = useState<ProjectPortalTheme>(existing);
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    await updateProject(project.id, { portalTheme: theme });
+    setSaving(false);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div className="bg-card border border-border rounded-3xl w-full max-w-lg p-6 md:p-8 shadow-2xl space-y-6 relative max-h-[calc(100vh-2rem)] overflow-y-auto scrollbar-thin select-none">
+        <button onClick={onClose} className="absolute right-4 top-4 p-1.5 hover:bg-accent rounded-lg text-muted-foreground hover:text-foreground transition-all cursor-pointer">
+          <X className="w-4 h-4" />
+        </button>
+
+        <div className="space-y-1">
+          <h2 className="text-lg font-black text-foreground uppercase tracking-wider font-outfit flex items-center gap-2">
+            <Palette className="w-5 h-5 text-primary" /> Client Portal Theme
+          </h2>
+          <p className="text-xs text-muted-foreground font-medium leading-relaxed">
+            Set the look & feel clients see when they log in to{' '}
+            <span className="font-bold text-foreground">{project.icon} {project.name}</span>.
+          </p>
+        </div>
+
+        <div className="space-y-5">
+          {/* Mode toggle */}
+          <div className="space-y-2">
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Appearance Mode</p>
+            <div className="flex gap-3">
+              {(['dark', 'light'] as const).map(m => (
+                <button
+                  key={m}
+                  onClick={() => setTheme(t => ({ ...t, mode: m }))}
+                  className={cn(
+                    'flex-1 flex items-center justify-center gap-2 h-11 rounded-xl border text-xs font-bold transition-all cursor-pointer',
+                    theme.mode === m
+                      ? 'bg-primary/10 border-primary text-primary'
+                      : 'border-border hover:bg-accent text-muted-foreground'
+                  )}
+                >
+                  {m === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+                  {m === 'dark' ? 'Dark Mode' : 'Light Mode'}
+                  {theme.mode === m && <Check className="w-3.5 h-3.5" />}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Accent colour */}
+          <div className="space-y-2">
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Accent Colour</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+              {ACCENT_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setTheme(t => ({ ...t, accentColor: opt.value }))}
+                  className={cn(
+                    'flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-xs font-bold transition-all truncate hover:shadow-xs hover:border-primary/20 cursor-pointer',
+                    theme.accentColor === opt.value
+                      ? 'bg-primary/10 border-primary text-primary'
+                      : 'border-border hover:bg-accent text-muted-foreground'
+                  )}
+                >
+                  <span className={cn('w-3 h-3 rounded-full shrink-0 shadow-sm', opt.dot)} />
+                  <span className="truncate">{opt.label}</span>
+                  {theme.accentColor === opt.value && <Check className="w-3.5 h-3.5 ml-auto shrink-0" />}
+                </button>
+              ))}
+
+              {/* Custom Color Selector Button */}
+              <label
+                className={cn(
+                  'flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-xs font-bold transition-all truncate hover:shadow-xs hover:border-primary/20 cursor-pointer relative overflow-hidden select-none',
+                  theme.accentColor.startsWith('#')
+                    ? 'bg-primary/10 border-primary text-primary'
+                    : 'border-border hover:bg-accent text-muted-foreground'
+                )}
+              >
+                <input
+                  type="color"
+                  value={theme.accentColor.startsWith('#') ? theme.accentColor : '#6366f1'}
+                  onChange={e => setTheme(t => ({ ...t, accentColor: e.target.value }))}
+                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                />
+                <span 
+                  className="w-3 h-3 rounded-full shrink-0 shadow-sm border border-white/20" 
+                  style={{ 
+                    background: theme.accentColor.startsWith('#') 
+                      ? theme.accentColor 
+                      : 'linear-gradient(45deg, #ff0000 0%, #ff7f00 15%, #ffff00 30%, #00ff00 45%, #0000ff 60%, #4b0082 75%, #8b00ff 100%)' 
+                  }} 
+                />
+                <span className="truncate">{theme.accentColor.startsWith('#') ? 'Custom Color' : 'Add Custom...'}</span>
+                {theme.accentColor.startsWith('#') && <Check className="w-3.5 h-3.5 ml-auto shrink-0" />}
+              </label>
+            </div>
+
+            {/* Custom Hex Manual Input field (shows only when custom color is selected) */}
+            {theme.accentColor.startsWith('#') && (
+              <div className="flex items-center gap-3 bg-accent/15 border border-border/50 p-2.5 rounded-xl mt-2 animate-in slide-in-from-top-1.5 duration-200">
+                <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest shrink-0">Hex Value:</span>
+                <input
+                  type="text"
+                  value={theme.accentColor}
+                  onChange={e => {
+                    const val = e.target.value;
+                    if (val.startsWith('#') && val.length <= 7) {
+                      setTheme(t => ({ ...t, accentColor: val }));
+                    } else if (!val.startsWith('#') && val.length <= 6) {
+                      setTheme(t => ({ ...t, accentColor: `#${val}` }));
+                    }
+                  }}
+                  className="bg-transparent text-xs font-bold text-foreground border-b border-border/60 focus:border-primary/50 focus:outline-none flex-1 py-0.5 tracking-wider font-mono uppercase"
+                  placeholder="#HEXCODE"
+                  maxLength={7}
+                />
+                <div 
+                  className="w-5 h-5 rounded-md border border-border/50 shrink-0 shadow-sm" 
+                  style={{ backgroundColor: theme.accentColor }}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Font */}
+          <div className="space-y-2">
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+              <Type className="w-3 h-3" /> Font Family
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+              {FONT_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setTheme(t => ({ ...t, fontFamily: opt.value }))}
+                  className={cn(
+                    'px-3 py-2.5 rounded-xl border text-xs font-bold transition-all text-center relative hover:shadow-xs hover:border-primary/20 cursor-pointer',
+                    theme.fontFamily === opt.value
+                      ? 'bg-primary/10 border-primary text-primary font-black'
+                      : 'border-border hover:bg-accent text-muted-foreground'
+                  )}
+                >
+                  <span>{opt.label}</span>
+                  <span className="block text-[9px] font-medium opacity-50 tracking-wider">Aa</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Live preview chip */}
+          <div
+            className="flex items-center gap-3 p-4 rounded-2xl border border-border bg-accent/5 relative overflow-hidden text-left"
+            data-accent={theme.accentColor.startsWith('#') ? undefined : theme.accentColor}
+            style={{ 
+              fontFamily: `var(--font-${theme.fontFamily})`,
+              borderColor: theme.accentColor.startsWith('#') ? theme.accentColor + '50' : undefined
+            }}
+          >
+            <div className="absolute right-0 top-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
+            <div 
+              className={cn('w-10 h-10 rounded-xl flex items-center justify-center text-lg shadow-sm shrink-0', theme.mode === 'dark' ? 'bg-slate-800 border border-slate-700/50' : 'bg-white border border-slate-200/50')}
+              style={{
+                color: theme.accentColor.startsWith('#') ? theme.accentColor : undefined,
+                backgroundColor: theme.accentColor.startsWith('#') ? theme.accentColor + '20' : undefined
+              }}
+            >
+              {project.icon || '✨'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className={cn('text-xs font-black uppercase tracking-wider truncate', theme.mode === 'dark' ? 'text-slate-100' : 'text-slate-900')}>{project.name}</p>
+              <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-wide mt-0.5">
+                {theme.mode === 'dark' ? '🌙 Dark Mode' : '☀️ Light Mode'} • {theme.accentColor.startsWith('#') ? `Custom (${theme.accentColor})` : ACCENT_OPTIONS.find(a => a.value === theme.accentColor)?.label} • {FONT_OPTIONS.find(f => f.value === theme.fontFamily)?.label}
+              </p>
+            </div>
+            <div 
+              className="shrink-0 border rounded-md px-2 py-0.5 text-[8px] font-bold uppercase tracking-widest"
+              style={{
+                color: theme.accentColor.startsWith('#') ? theme.accentColor : 'var(--primary)',
+                borderColor: theme.accentColor.startsWith('#') ? theme.accentColor + '30' : 'var(--primary-foreground)',
+                backgroundColor: theme.accentColor.startsWith('#') ? theme.accentColor + '10' : 'var(--primary)/10'
+              }}
+            >
+              Live Preview
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-3 pt-1">
+          <Button type="button" variant="outline" className="flex-1 border-border/40 hover:bg-accent cursor-pointer" onClick={onClose}>Cancel</Button>
+          <Button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 font-bold cursor-pointer"
+          >
+            {saving ? 'Saving…' : 'Save Theme'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function SectionsModal({ project, onClose }: { project: any; onClose: () => void }) {
   const { updateProject } = useProjectStore();
@@ -85,26 +329,13 @@ function SectionsModal({ project, onClose }: { project: any; onClose: () => void
               {customSections.map((section, idx) => (
                 <div key={section.id} className="flex items-center gap-3 bg-card border border-border p-3 rounded-2xl hover:border-primary/20 hover:shadow-lg transition-all group/item">
                   <div className="relative shrink-0">
-                    <select
+                    <Select
                       value={section.icon}
-                      onChange={e => handleUpdateSectionIcon(section.id, e.target.value)}
-                      className="appearance-none bg-background border border-border hover:border-border/80 focus:border-primary/50 rounded-xl pl-3 pr-6 py-2 text-sm focus:outline-none cursor-pointer w-14 transition-all text-center text-foreground"
-                    >
-                      {[
-                        { emoji: 'GraduationCap', label: '🎓' },
-                        { emoji: 'ShieldAlert', label: '🛡️' },
-                        { emoji: 'Backpack', label: '🎒' },
-                        { emoji: 'Code2', label: '💻' },
-                        { emoji: 'Briefcase', label: '💼' },
-                        { emoji: 'Users2', label: '👥' },
-                        { emoji: 'BookOpen', label: '📝' }
-                      ].map(opt => (
-                        <option key={opt.emoji} value={opt.emoji}>{opt.label}</option>
-                      ))}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-1.5 flex items-center text-muted-foreground">
-                      <ChevronDown className="w-3 h-3" />
-                    </div>
+                      onChange={val => handleUpdateSectionIcon(section.id, val)}
+                      options={SECTION_ICON_OPTIONS}
+                      className="w-18"
+                      triggerClassName="h-9 px-2 rounded-xl"
+                    />
                   </div>
 
                   <div className="flex-1 min-w-0">
@@ -310,6 +541,7 @@ export default function ProjectDetailPage() {
   const [showFolderInput, setShowFolderInput] = useState(false);
   const [showFolderInputId, setShowFolderInputId] = useState<string | null>(null);
   const [showSectionsModal, setShowSectionsModal] = useState(false);
+  const [showThemeModal, setShowThemeModal] = useState(false);
   const [showNewDocDropdown, setShowNewDocDropdown] = useState(false);
 
   const project = projects.find(p => p.id === id);
@@ -376,14 +608,24 @@ export default function ProjectDetailPage() {
         </div>
         <div className="flex items-center gap-2 sm:ml-auto">
           {isAdmin && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowSectionsModal(true)}
-              className="gap-2 border-border/40 hover:bg-accent font-semibold"
-            >
-              <Workflow className="w-3.5 h-3.5" /> Manage Sections
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowThemeModal(true)}
+                className="gap-2 border-border/40 hover:bg-accent font-semibold"
+              >
+                <Palette className="w-3.5 h-3.5" /> Portal Theme
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowSectionsModal(true)}
+                className="gap-2 border-border/40 hover:bg-accent font-semibold"
+              >
+                <Workflow className="w-3.5 h-3.5" /> Manage Sections
+              </Button>
+            </>
           )}
 
           <div className="relative">
@@ -679,6 +921,9 @@ export default function ProjectDetailPage() {
       )}
       {showSectionsModal && (
         <SectionsModal project={project} onClose={() => setShowSectionsModal(false)} />
+      )}
+      {showThemeModal && (
+        <PortalThemeModal project={project} onClose={() => setShowThemeModal(false)} />
       )}
     </div>
   );

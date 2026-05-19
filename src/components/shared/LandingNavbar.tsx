@@ -19,7 +19,7 @@ export default function LandingNavbar() {
             <Layout className="w-5 h-5 text-white" />
           </div>
           <div className="flex flex-col">
-            <span className="font-black text-xl tracking-tighter leading-none">Nexus</span>
+            <span className="font-black text-xl tracking-tighter leading-none">Veloc</span>
             <span className="text-[8px] font-black uppercase tracking-[0.3em] text-primary">Enterprise</span>
           </div>
         </Link>
@@ -37,7 +37,7 @@ export default function LandingNavbar() {
           </Link>
           <Link href="/register">
             <Button className="premium-gradient text-primary-foreground font-bold rounded-xl px-8 h-11 shadow-lg shadow-primary/10 border-0">
-              Join Nexus
+              Join Veloc
             </Button>
           </Link>
         </div>

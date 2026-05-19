@@ -25,11 +25,15 @@ export default function LoginPage() {
   useEffect(() => {
     const savedAuth = typeof window !== 'undefined' ? localStorage.getItem('nexus-auth') : null;
     let hasAuth = false;
+    let savedRole = '';
+    let savedProjectId = '';
     if (savedAuth) {
       try {
         const parsed = JSON.parse(savedAuth);
         if (parsed.state?.isAuthenticated && parsed.state?.user) {
           hasAuth = true;
+          savedRole = parsed.state.user.role;
+          savedProjectId = parsed.state.user.assignedProjectId || '';
         }
       } catch (e) {
         // ignore
@@ -37,23 +41,37 @@ export default function LoginPage() {
     }
 
     if (isAuthenticated || hasAuth) {
-      router.replace('/dashboard');
+      if (savedRole === 'CLIENT' && savedProjectId) {
+        router.replace(`/client/${savedProjectId}`);
+      } else {
+        router.replace('/dashboard');
+      }
     }
   }, [isAuthenticated, router]);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-    await executeLoginFlow(email);
+    await executeLoginFlow(email, password);
   };
 
-  const executeLoginFlow = async (targetEmail: string) => {
+  const executeLoginFlow = async (targetEmail: string, targetPassword: string) => {
     try {
-      await login(targetEmail);
+      await login(targetEmail, targetPassword);
 
+      // Get fresh user state after login
+      const { user } = useAuthStore.getState();
+
+      // CLIENT users → redirect to their assigned project portal
+      if (user?.role === 'CLIENT' && user?.assignedProjectId) {
+        router.push(`/client/${user.assignedProjectId}`);
+        return;
+      }
+
+      // Admin/Staff users → go to admin dashboard
       const normalized = targetEmail.toLowerCase().trim();
       if (normalized.includes('admin') || normalized === 'john@example.com' || normalized === 'jane@example.com') {
-        setActiveProject('p1'); // Default to Little Seeds
+        setActiveProject('p1');
         const firstDoc = documents.find(d => d.projectId === 'p1' && d.category === 'teacher');
         if (firstDoc) setActiveDoc(firstDoc.id);
       } else if (normalized.includes('teacher') || normalized === 'jenkins@veloc.com') {
@@ -65,7 +83,7 @@ export default function LoginPage() {
         const firstDoc = documents.find(d => d.projectId === 'p1' && d.category === 'student');
         if (firstDoc) setActiveDoc(firstDoc.id);
       } else if (normalized.includes('merchant') || normalized === 'marco@veloc.com') {
-        setActiveProject('p3'); // ApexCommerce
+        setActiveProject('p3');
         const firstDoc = documents.find(d => d.projectId === 'p3' && (d.category === 'teacher' || d.category === 'admin'));
         if (firstDoc) setActiveDoc(firstDoc.id);
       } else {
@@ -112,7 +130,7 @@ export default function LoginPage() {
           <div className="grid grid-cols-1 gap-3 text-left">
             {[
               { emoji: '🔑', title: 'Admin Documentation Manager', desc: 'Log in as Veloc Admin to easily create, edit, rename or delete document structures.' },
-              { emoji: '📖', title: 'Guest Public View Access', desc: 'No login required! Visitors can explore and read all active project directories straight as Guests.' },
+              { emoji: '📖', title: 'Client Project Portal', desc: 'Clients get dedicated access to their project docs with a clean, focused reading experience.' },
             ].map(f => (
               <div key={f.title} className="flex items-start gap-4 p-4 rounded-2xl bg-[#0b1220]/60 border border-border/30 backdrop-blur-xs">
                 <span className="text-xl shrink-0">{f.emoji}</span>
@@ -176,7 +194,6 @@ export default function LoginPage() {
                   onFocus={() => setFocused('password')}
                   onBlur={() => setFocused(null)}
                   className="flex-1 bg-transparent text-xs font-bold outline-none placeholder:text-slate-600 text-slate-100"
-                  required
                 />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-slate-500 hover:text-slate-300 transition-colors">
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -225,15 +242,15 @@ export default function LoginPage() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="fixed top-6 right-6 z-50 flex items-center gap-3 p-4 rounded-xl bg-emerald-950/80 border border-emerald-500/30 backdrop-blur-md shadow-2xl max-w-sm"
+            className="fixed top-6 right-6 z-50 flex items-center gap-3 p-4 rounded-xl bg-rose-950/80 border border-rose-500/30 backdrop-blur-md shadow-2xl max-w-sm"
           >
-            <AlertCircle className="w-5 h-5 text-emerald-400 shrink-0" />
-            <div className="flex-1 text-xs font-bold text-emerald-100">
+            <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
+            <div className="flex-1 text-xs font-bold text-rose-100">
               {toastMessage}
             </div>
             <button
               onClick={() => setToastMessage(null)}
-              className="text-emerald-400 hover:text-emerald-200 p-0.5 rounded-lg transition-colors cursor-pointer"
+              className="text-rose-400 hover:text-rose-200 p-0.5 rounded-lg transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>

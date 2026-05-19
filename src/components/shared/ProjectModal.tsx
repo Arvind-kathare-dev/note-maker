@@ -10,6 +10,23 @@ import { useProjectStore, Project } from '@/store/useProjectStore';
 import { useDocumentStore } from '@/store/useDocumentStore';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+
+const CATEGORY_OPTIONS = [
+  'School Based', 'Tech Based', 'E-Commerce', 'Real Estate', 
+  'Healthcare', 'SaaS Platform', 'Fintech', 'Social Media', 
+  'Fitness & Gym', 'Landing Page', 'Logistics & Supply', 'Other / Custom'
+].map(cat => ({ value: cat, label: cat }));
+
+const SECTION_ICON_OPTIONS = [
+  { emoji: 'GraduationCap', label: '🎓' },
+  { emoji: 'ShieldAlert', label: '🛡️' },
+  { emoji: 'Backpack', label: '🎒' },
+  { emoji: 'Code2', label: '💻' },
+  { emoji: 'Briefcase', label: '💼' },
+  { emoji: 'Users2', label: '👥' },
+  { emoji: 'BookOpen', label: '📝' }
+].map(opt => ({ value: opt.emoji, label: opt.label }));
 
 const PROJECT_ICONS = ['🌱', '🚀', '🛒', '⚡', '📦', '🏕️', '🎯', '🔥', '💡', '🛠️', '📊', '🎨', '🔬'];
 const PROJECT_COLORS = [
@@ -110,16 +127,16 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
   return (
     <div className="fixed inset-0 z-2000 flex items-center justify-center p-4 select-none animate-in fade-in duration-200">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" onClick={onClose} />
-      <div className="relative w-full max-w-md bg-card border border-border shadow-2xl rounded-3xl overflow-hidden text-foreground">
+      <div className="relative w-full max-w-xl bg-card border border-border shadow-2xl rounded-3xl overflow-hidden text-foreground">
         
         {/* Header */}
-        <div className="p-6 border-b border-border flex items-center justify-between">
+        <div className="p-5 sm:p-6 border-b border-border flex items-center justify-between">
           <div className="space-y-0.5 text-left">
             <h2 className="text-lg font-black font-outfit uppercase tracking-wider text-foreground">
-              {project ? 'Edit Workspace' : 'New Project Workspace'}
+              {project ? 'Edit Module' : 'Create New Module'}
             </h2>
             <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">
-              {project ? 'Modify your workspace parameters' : 'Create a customized tenant documentation pool'}
+              {project ? 'Modify your module parameters' : 'Create a customized tenant module documentation pool'}
             </p>
           </div>
           <button 
@@ -131,10 +148,10 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
         </div>
 
         {/* Scrollable Form Area */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5 max-h-[75vh] overflow-y-auto scrollbar-thin text-left">
+        <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-4 sm:space-y-5 max-h-[80vh] sm:max-h-[75vh] overflow-y-auto scrollbar-thin text-left">
           
           {/* Custom Visual Customization block */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             
             {/* Icon Picker Grid */}
             <div className="space-y-1.5">
@@ -160,31 +177,55 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
             <div className="space-y-1.5 flex flex-col justify-between">
               <div>
                 <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block mb-1.5">Color</label>
-                <div className="grid grid-cols-5 gap-1 p-2 bg-background border border-border rounded-xl">
+                <div className="flex flex-wrap gap-1.5 p-2 bg-background border border-border rounded-xl items-center">
                   {PROJECT_COLORS.map(c => (
                     <button
                       key={c} 
                       type="button"
                       onClick={() => setColor(c)}
                       className={cn(
-                        'w-5.5 h-5.5 rounded-md transition-all cursor-pointer', 
+                        'w-5.5 h-5.5 rounded-md transition-all cursor-pointer shrink-0', 
                         color === c ? 'ring-2 ring-offset-2 ring-offset-background ring-primary scale-110' : 'hover:scale-105'
                       )}
                       style={{ backgroundColor: c }}
                     />
                   ))}
+                  
+                  {/* Custom Color Selector */}
+                  <label 
+                    className={cn(
+                      'w-5.5 h-5.5 rounded-md transition-all cursor-pointer shrink-0 flex items-center justify-center relative overflow-hidden border border-border hover:scale-105',
+                      !PROJECT_COLORS.includes(color) ? 'ring-2 ring-offset-2 ring-offset-background ring-primary scale-110' : ''
+                    )}
+                    style={{ 
+                      background: !PROJECT_COLORS.includes(color) 
+                        ? color 
+                        : 'linear-gradient(45deg, #ff0000 0%, #ff7f00 15%, #ffff00 30%, #00ff00 45%, #0000ff 60%, #4b0082 75%, #8b00ff 100%)' 
+                    }}
+                    title="Choose custom color"
+                  >
+                    <input 
+                      type="color" 
+                      value={color}
+                      onChange={e => setColor(e.target.value)}
+                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                    />
+                    {PROJECT_COLORS.includes(color) && (
+                      <span className="text-[10px] text-white font-black drop-shadow-md select-none pointer-events-none">+</span>
+                    )}
+                  </label>
                 </div>
               </div>
               
               {/* Preview Bubble */}
-              <div className="flex items-center gap-2 p-2 bg-background border border-border rounded-xl">
+              <div className="flex items-center gap-2 p-2 bg-background border border-border rounded-xl mt-3 sm:mt-0">
                 <div 
                   className="w-7 h-7 rounded-lg flex items-center justify-center text-sm shrink-0 select-none" 
                   style={{ backgroundColor: color + '25' }}
                 >
                   {icon}
                 </div>
-                <span className="text-[11px] font-bold text-foreground truncate max-w-[80px]">{name || 'Project Name'}</span>
+                <span className="text-[11px] font-bold text-foreground truncate max-w-[80px]">{name || 'Module Name'}</span>
               </div>
             </div>
 
@@ -192,7 +233,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
 
           {/* Project Details */}
           <div className="space-y-1.5">
-            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block">Project Name *</label>
+            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block">Module Name *</label>
             <Input 
               value={name} 
               onChange={e => setName(e.target.value)} 
@@ -207,32 +248,24 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
             <Input 
               value={description} 
               onChange={e => setDescription(e.target.value)} 
-              placeholder="Brief summary of project manuals..." 
+              placeholder="Brief summary of module manuals..." 
               className="h-11 bg-background border-border focus:border-primary/50 text-foreground font-bold rounded-xl" 
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block">Project Category / Workspace Type</label>
-            <select
+            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block">Module Category / Workspace Type</label>
+            <Select
               value={category}
-              onChange={e => setCategory(e.target.value)}
-              className="w-full h-11 bg-background border border-border focus:border-primary/50 rounded-xl px-4 text-xs font-bold text-foreground focus:outline-none cursor-pointer"
-            >
-              {[
-                'School Based', 'Tech Based', 'E-Commerce', 'Real Estate', 
-                'Healthcare', 'SaaS Platform', 'Fintech', 'Social Media', 
-                'Fitness & Gym', 'Landing Page', 'Logistics & Supply', 'Other / Custom'
-              ].map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
+              onChange={setCategory}
+              options={CATEGORY_OPTIONS}
+            />
           </div>
 
           {/* Dynamic Project Sections Editor */}
           <div className="space-y-3 p-4 bg-accent/20 border border-border rounded-2xl max-h-[220px] overflow-y-auto scrollbar-thin">
             <div className="flex items-center justify-between">
-              <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Workspace Custom Sections</span>
+              <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Module Custom Sections</span>
               <button
                 type="button"
                 onClick={handleAddCustomSection}
@@ -246,26 +279,13 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
               {customSections.map((section, idx) => (
                 <div key={section.id} className="flex items-center gap-3 bg-card border border-border p-3 rounded-2xl hover:border-primary/40 hover:shadow-lg transition-all group/item">
                   <div className="relative shrink-0">
-                    <select
+                    <Select
                       value={section.icon}
-                      onChange={e => handleUpdateSectionIcon(section.id, e.target.value)}
-                      className="appearance-none bg-background border border-border hover:border-border/80 focus:border-primary/50 rounded-xl pl-3 pr-6 py-2 text-sm focus:outline-none cursor-pointer w-14 transition-all text-center"
-                    >
-                      {[
-                        { emoji: 'GraduationCap', label: '🎓' },
-                        { emoji: 'ShieldAlert', label: '🛡️' },
-                        { emoji: 'Backpack', label: '🎒' },
-                        { emoji: 'Code2', label: '💻' },
-                        { emoji: 'Briefcase', label: '💼' },
-                        { emoji: 'Users2', label: '👥' },
-                        { emoji: 'BookOpen', label: '📝' }
-                      ].map(opt => (
-                        <option key={opt.emoji} value={opt.emoji}>{opt.label}</option>
-                      ))}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-1.5 flex items-center text-muted-foreground">
-                      <ChevronDown className="w-3 h-3" />
-                    </div>
+                      onChange={val => handleUpdateSectionIcon(section.id, val)}
+                      options={SECTION_ICON_OPTIONS}
+                      className="w-18"
+                      triggerClassName="h-9 px-2 rounded-xl"
+                    />
                   </div>
 
                   <div className="flex-1 min-w-0">
@@ -308,7 +328,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
               type="submit"
               className="flex-1 h-11 bg-primary text-primary-foreground hover:bg-primary/95 rounded-xl text-xs font-black uppercase tracking-wider shadow-lg shadow-primary/10 transition-all cursor-pointer text-center"
             >
-              {project ? 'Save Changes' : 'Create Workspace'}
+              {project ? 'Save Changes' : 'Create Module'}
             </button>
           </div>
 

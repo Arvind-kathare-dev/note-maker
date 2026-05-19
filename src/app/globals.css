@@ -139,8 +139,28 @@
   --accent-foreground: oklch(0.985 0 0);
 }
 
+[data-accent="cyan"] {
+  --accent-primary: oklch(0.715 0.143 215.221);
+  --accent-foreground: oklch(0.1 0 0);
+}
+
 [data-accent="slate"] {
   --accent-primary: oklch(0.439 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+}
+
+[data-accent="orange"] {
+  --accent-primary: oklch(0.672 0.222 41.5);
+  --accent-foreground: oklch(0.985 0 0);
+}
+
+[data-accent="mint"] {
+  --accent-primary: oklch(0.72 0.16 165);
+  --accent-foreground: oklch(0.1 0 0);
+}
+
+[data-accent="crimson"] {
+  --accent-primary: oklch(0.48 0.19 25);
   --accent-foreground: oklch(0.985 0 0);
 }
 
@@ -160,6 +180,8 @@
   .font-montserrat { font-family: var(--font-montserrat), sans-serif; }
   .font-mono { font-family: var(--font-jetbrains), monospace; }
   .font-serif { font-family: var(--font-playfair), serif; }
+  .font-lora { font-family: var(--font-lora), serif; }
+  .font-syne { font-family: var(--font-syne), sans-serif; }
 }
 
 @layer utilities {
@@ -174,5 +196,23 @@
   .text-gradient {
     @apply bg-clip-text text-transparent;
     background-image: linear-gradient(135deg, var(--accent-primary) 0%, oklch(from var(--accent-primary) calc(l - 0.1) c h) 100%);
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 9999px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
   }
 }

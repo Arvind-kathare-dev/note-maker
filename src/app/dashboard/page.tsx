@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   FileText, 
@@ -39,8 +40,9 @@ import { motion } from 'framer-motion';
 export default function DashboardPage() {
   const router = useRouter();
   const { projects, setActiveProject } = useProjectStore();
-  const { documents, setActiveDoc } = useDocumentStore();
+  const { documents, setActiveDoc, createDocument } = useDocumentStore();
   const { user } = useAuthStore();
+  const [filterProjectId, setFilterProjectId] = useState<string>('all');
 
   const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN' || user?.role === 'admin';
 
@@ -61,7 +63,11 @@ export default function DashboardPage() {
     (isAdmin ? true : d.status === 'published')
   );
 
-  const recentDocs = allowedDocs.slice(0, 5);
+  const filteredDocs = filterProjectId === 'all'
+    ? allowedDocs
+    : allowedDocs.filter(d => d.projectId === filterProjectId);
+
+  const recentDocs = filteredDocs.slice(0, 5);
   const recentProjects = allowedProjects.slice(0, 4);
 
   // Core metrics calculated from real database directories
@@ -70,8 +76,8 @@ export default function DashboardPage() {
   const draftDocsCount = allowedDocs.filter(d => d.status === 'draft').length;
   
   const allSections = allowedProjects.flatMap(p => p.sections || []);
-  const uniqueClassroomIds = Array.from(new Set(allSections.map(s => s.id)));
-  const totalClassroomsCount = uniqueClassroomIds.length;
+  const uniqueSectionIds = Array.from(new Set(allSections.map(s => s.id)));
+  const totalSectionsCount = uniqueSectionIds.length;
 
   if (totalProjectsCount === 0) {
     return (
@@ -145,8 +151,8 @@ export default function DashboardPage() {
     router.push(`/dashboard/documents/${docId}`);
   };
 
-  // Compile classrooms list with dynamic document counts
-  const classroomMetrics = (() => {
+  // Compile sections list with dynamic document counts
+  const sectionMetrics = (() => {
     const seenIds = new Set<string>();
     const list: Array<{ id: string; label: string; icon: string; count: number; percentage: number }> = [];
 
@@ -180,7 +186,7 @@ export default function DashboardPage() {
             Veloc Docs Portal
           </h1>
           <p className="text-sm md:text-base text-slate-600 dark:text-slate-300 font-medium leading-relaxed max-w-2xl">
-            Welcome back, <span className="font-extrabold text-slate-900 dark:text-white">{user?.name}</span>. Explore systematic, project-wise classroom onboarding flows, developer APIs, and operational guidelines optimized for your custom access profile.
+            Welcome back, <span className="font-extrabold text-slate-900 dark:text-white">{user?.name}</span>. Explore systematic, project-wise module onboarding flows, developer APIs, and operational guidelines optimized for your custom access profile.
           </p>
           <div className="flex flex-wrap gap-4 pt-2">
             {isAdmin ? (
@@ -215,14 +221,14 @@ export default function DashboardPage() {
       {/* Database Directory Stats Grid */}
       <div className="space-y-4">
         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 select-none">
-          Active Database Directory Overview
+          Active Database Directory
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {[
             { title: "Workspace Directories", value: totalProjectsCount, desc: "Active project suites", icon: FolderKanban, color: "text-primary bg-primary/10" },
             { title: "Published Manuals", value: publishedDocsCount, desc: "Live client & staff guides", icon: FileText, color: "text-emerald-500 bg-emerald-500/10" },
             { title: "Drafts & Revisions", value: draftDocsCount, desc: "In-progress revisions", icon: Activity, color: "text-amber-500 bg-amber-500/10" },
-            { title: "Configured Classrooms", value: totalClassroomsCount, desc: "Custom role partitions", icon: Compass, color: "text-sky-500 bg-sky-500/10" }
+            { title: "Configured Sections", value: totalSectionsCount, desc: "Custom module sections", icon: Compass, color: "text-sky-500 bg-sky-500/10" }
           ].map((stat, i) => (
             <Card key={i} className="bg-card border-border/40 hover:border-primary/20 hover:shadow-md transition-all duration-300 overflow-hidden relative">
               <CardContent className="p-5 flex items-center justify-between">
@@ -337,12 +343,42 @@ export default function DashboardPage() {
 
           {/* Section: Recent Documentation Operations */}
           <div className="space-y-5 pt-2">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="text-left">
                 <h2 className="text-lg font-extrabold tracking-tight text-slate-900 dark:text-slate-100 uppercase font-outfit">
                   Recent Document Operations
                 </h2>
                 <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Quick jump into authorized documentation</p>
+              </div>
+
+              {/* Module Filter Tabs */}
+              <div className="flex flex-wrap gap-1 bg-slate-100 dark:bg-slate-900/60 p-1 border border-border/40 rounded-xl max-w-full overflow-x-auto scrollbar-thin">
+                <button
+                  onClick={() => setFilterProjectId('all')}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
+                    filterProjectId === 'all'
+                      ? "bg-primary text-primary-foreground shadow-xs"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  All
+                </button>
+                {allowedProjects.map(proj => (
+                  <button
+                    key={proj.id}
+                    onClick={() => setFilterProjectId(proj.id)}
+                    className={cn(
+                      "px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1 whitespace-nowrap",
+                      filterProjectId === proj.id
+                        ? "bg-primary text-primary-foreground shadow-xs"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <span>{proj.icon}</span>
+                    <span className="max-w-[70px] truncate">{proj.name}</span>
+                  </button>
+                ))}
               </div>
             </div>
             
@@ -411,20 +447,20 @@ export default function DashboardPage() {
 
         </div>
 
-        {/* Right Column: Classroom Directory insights & Sim Panel (Span 1) */}
+        {/* Right Column: Section Directory insights & Sim Panel (Span 1) */}
         <div className="space-y-8">
           
-          {/* Classroom Directory insights card */}
+          {/* Section Directory insights card */}
           <div className="space-y-4">
             <h2 className="text-sm font-black flex items-center gap-2 text-slate-900 dark:text-slate-200 uppercase tracking-widest font-outfit text-left">
-              <Compass className="w-4 h-4 text-primary shrink-0" /> Classroom Directory Distribution
+              <Compass className="w-4 h-4 text-primary shrink-0" /> Section Density Distribution
             </h2>
             <Card className="bg-card border-border/40 shadow-xs text-left overflow-hidden">
               <CardHeader className="pb-3">
                 <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-wider">Dynamic manual density by category</CardTitle>
               </CardHeader>
               <CardContent className="space-y-5">
-                {classroomMetrics.map((c, i) => {
+                {sectionMetrics.map((c, i) => {
                   const Icon = c.id === 'teacher' ? GraduationCap
                              : c.id === 'admin' ? ShieldAlert
                              : c.id === 'student' ? Backpack
@@ -448,7 +484,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="w-full bg-slate-100 dark:bg-slate-900 h-2 rounded-full overflow-hidden border border-border/20">
                         <div 
-                          className={cn(
+                           className={cn(
                             "h-full rounded-full transition-all duration-300",
                             c.id === 'teacher' ? "bg-primary" :
                             c.id === 'admin' ? "bg-purple-500" :
@@ -461,7 +497,7 @@ export default function DashboardPage() {
                     </div>
                   );
                 })}
-                {classroomMetrics.length === 0 && (
+                {sectionMetrics.length === 0 && (
                   <p className="text-xs text-slate-500 italic text-center py-4">No sections loaded in active workspaces.</p>
                 )}
               </CardContent>

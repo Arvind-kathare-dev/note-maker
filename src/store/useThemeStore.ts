@@ -2,8 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
-export type AccentColor = 'blue' | 'purple' | 'green' | 'amber' | 'rose' | 'slate';
-export type FontFamily = 'inter' | 'outfit' | 'roboto' | 'playfair' | 'montserrat' | 'mono' | 'serif';
+export type AccentColor = 'blue' | 'purple' | 'green' | 'amber' | 'rose' | 'slate' | 'orange' | 'mint' | 'crimson';
+export type FontFamily = 'inter' | 'outfit' | 'roboto' | 'playfair' | 'montserrat' | 'mono' | 'serif' | 'lora' | 'syne';
 
 interface ThemeStore {
   mode: ThemeMode;

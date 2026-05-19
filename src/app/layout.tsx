@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Outfit, Roboto, Playfair_Display, Montserrat, JetBrains_Mono } from "next/font/google";
+import { Inter, Outfit, Roboto, Playfair_Display, Montserrat, JetBrains_Mono, Lora, Syne } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/shared/Providers";
 
@@ -34,6 +34,16 @@ const jetbrains = JetBrains_Mono({
   subsets: ["latin"],
 });
 
+const lora = Lora({
+  variable: "--font-lora",
+  subsets: ["latin"],
+});
+
+const syne = Syne({
+  variable: "--font-syne",
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
   title: "Veloc Note Maker | Fast, Smart & Scalable Note Platform",
   description: "Boost productivity with Veloc Note Maker – a modern platform for notes, documentation, and knowledge management.",
@@ -44,7 +54,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const fontVariables = `${inter.variable} ${outfit.variable} ${roboto.variable} ${playfair.variable} ${montserrat.variable} ${jetbrains.variable}`;
+  const fontVariables = `${inter.variable} ${outfit.variable} ${roboto.variable} ${playfair.variable} ${montserrat.variable} ${jetbrains.variable} ${lora.variable} ${syne.variable}`;
 
   return (
     <html lang="en" className={`h-full ${fontVariables}`}>

@@ -3,7 +3,7 @@
 /* Editor prose content */
 .nexus-editor {
   min-height: 500px;
-  padding: 2rem 3rem 4rem;
+  padding: 1.5rem 0 3rem;
   color: var(--foreground);
   font-size: 16px;
   line-height: 1.75;

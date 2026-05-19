@@ -89,11 +89,11 @@ export default function ProjectsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Projects</h1>
-          <p className="text-sm text-muted-foreground mt-1">{projects.length} projects · Manage your workspaces</p>
+          <h1 className="text-2xl font-bold tracking-tight">Modules</h1>
+          <p className="text-sm text-muted-foreground mt-1">{projects.length} modules · Manage your workspaces</p>
         </div>
         <Button onClick={() => { setEditProject(undefined); setShowModal(true); }} className="gap-2 shrink-0">
-          <Plus className="w-4 h-4" /> New Project
+          <Plus className="w-4 h-4" /> Create New Module
         </Button>
       </div>
 
@@ -101,7 +101,7 @@ export default function ProjectsPage() {
       <div className="relative mb-6">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
-          placeholder="Search projects..."
+          placeholder="Search modules..."
           value={search} onChange={e => setSearch(e.target.value)}
           className="pl-9 h-10 bg-accent/30"
         />
@@ -113,11 +113,11 @@ export default function ProjectsPage() {
           <div className="w-16 h-16 rounded-2xl bg-accent flex items-center justify-center mb-4">
             <FolderKanban className="w-8 h-8 text-muted-foreground" />
           </div>
-          <h3 className="text-lg font-bold mb-2">{search ? 'No projects found' : 'No projects yet'}</h3>
+          <h3 className="text-lg font-bold mb-2">{search ? 'No modules found' : 'No modules yet'}</h3>
           <p className="text-sm text-muted-foreground mb-6 max-w-xs">
-            {search ? 'Try a different search term.' : 'Create your first project to organize your docs and notes.'}
+            {search ? 'Try a different search term.' : 'Create your first module to organize your docs and notes.'}
           </p>
-          {!search && <Button onClick={() => setShowModal(true)} className="gap-2"><Plus className="w-4 h-4" /> Create Project</Button>}
+          {!search && <Button onClick={() => setShowModal(true)} className="gap-2"><Plus className="w-4 h-4" /> Create Module</Button>}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -139,7 +139,7 @@ export default function ProjectsPage() {
             <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center group-hover:bg-primary/10 transition-colors">
               <Plus className="w-6 h-6" />
             </div>
-            <span className="text-sm font-medium">New Project</span>
+            <span className="text-sm font-medium">New Module</span>
           </button>
         </div>
       )}

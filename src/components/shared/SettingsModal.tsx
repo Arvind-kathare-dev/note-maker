@@ -31,6 +31,9 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     { id: 'amber', color: 'bg-amber-500' },
     { id: 'rose', color: 'bg-rose-500' },
     { id: 'slate', color: 'bg-slate-500' },
+    { id: 'orange', color: 'bg-orange-500' },
+    { id: 'mint', color: 'bg-teal-400' },
+    { id: 'crimson', color: 'bg-rose-800' },
   ];
 
   const fonts: { id: FontFamily; label: string }[] = [
@@ -40,6 +43,8 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     { id: 'playfair', label: 'Playfair (Classic)' },
     { id: 'montserrat', label: 'Montserrat (Bold)' },
     { id: 'mono', label: 'Monospace' },
+    { id: 'lora', label: 'Lora (Elegant Serif)' },
+    { id: 'syne', label: 'Syne (Artistic)' },
   ];
 
   return (
