@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, usePathname } from 'next/navigation';
 import { useDocumentStore } from '@/store/useDocumentStore';
 import { useProjectStore, getProjectSections } from '@/store/useProjectStore';
 import { cn } from '@/lib/utils';
@@ -24,6 +24,7 @@ export default function ClientSidebar({ projectId, onClose }: ClientSidebarProps
   const params = useParams();
   const activeDocId = params?.docId as string | undefined;
   const router = useRouter();
+  const pathname = usePathname();
 
   const { documents } = useDocumentStore();
   const { projects } = useProjectStore();
@@ -40,7 +41,8 @@ export default function ClientSidebar({ projectId, onClose }: ClientSidebarProps
   };
 
   const navigate = (docId: string) => {
-    router.push(`/client/${projectId}/docs/${docId}`);
+    const basePath = pathname?.startsWith('/public') ? '/public' : '/client';
+    router.push(`${basePath}/${projectId}/docs/${docId}`);
     onClose?.();
   };
 

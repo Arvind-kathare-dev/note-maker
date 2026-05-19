@@ -2,11 +2,13 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   Plus, FileText, Folder, Search, MoreHorizontal, ArrowLeft,
   Trash2, Edit3, BookOpen, Code2, Workflow, Users2, Star, Clock,
   ChevronRight, FolderPlus, StickyNote, X, FileCheck, GraduationCap, Users,
-  ShieldAlert, Backpack, Briefcase, ChevronDown, Palette, Sun, Moon, Type, Check, Sliders
+  ShieldAlert, Backpack, Briefcase, ChevronDown, Palette, Sun, Moon, Type, Check, Sliders,
+  Link2, AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -570,6 +572,7 @@ export default function ProjectDetailPage() {
   const [showSectionsModal, setShowSectionsModal] = useState(false);
   const [showThemeModal, setShowThemeModal] = useState(false);
   const [showNewDocDropdown, setShowNewDocDropdown] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
   const project = projects.find(p => p.id === id);
   if (!project) {
@@ -643,6 +646,19 @@ export default function ProjectDetailPage() {
                 className="gap-2 border-border/40 hover:bg-accent font-semibold"
               >
                 <Palette className="w-3.5 h-3.5" /> Portal Theme
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const url = `${window.location.origin}/public/${project.id}`;
+                  navigator.clipboard.writeText(url);
+                  setToastMessage('Public link copied to clipboard!');
+                  setTimeout(() => setToastMessage(''), 3000);
+                }}
+                className="gap-2 border-border/40 hover:bg-accent font-semibold"
+              >
+                <Link2 className="w-3.5 h-3.5" /> Public Link
               </Button>
               <Button
                 variant="outline"
@@ -952,6 +968,24 @@ export default function ProjectDetailPage() {
       {showThemeModal && (
         <PortalThemeModal project={project} onClose={() => setShowThemeModal(false)} />
       )}
+
+      {/* Toast Alert */}
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="fixed bottom-6 right-6 z-100 flex items-center gap-3 p-4 rounded-xl bg-primary text-primary-foreground shadow-2xl max-w-sm"
+          >
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <div className="flex-1 text-xs font-bold">
+              {toastMessage}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

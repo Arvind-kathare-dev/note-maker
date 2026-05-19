@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   LayoutDashboard,
   ChevronRight,
@@ -24,7 +25,9 @@ import {
   Backpack,
   Code2,
   BookOpen,
-  X
+  X,
+  Link2,
+  AlertCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -61,6 +64,7 @@ export default function Sidebar() {
 
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameVal, setRenameVal] = useState('');
   const [renamingProjectId, setRenamingProjectId] = useState<string | null>(null);
@@ -429,7 +433,19 @@ export default function Sidebar() {
                                       }}
                                       className="flex items-center gap-2 w-full text-left px-3 py-2 text-[10.5px] font-bold hover:bg-accent text-foreground transition-all cursor-pointer mt-1"
                                     >
-                                      <Edit3 className="w-3.5 h-3.5 text-muted-foreground" /> Rename
+                                      <Edit3 className="w-3.5 h-3.5" /> Rename Module
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        const url = `${window.location.origin}/public/${project.id}`;
+                                        navigator.clipboard.writeText(url);
+                                        setToastMessage('Public link copied to clipboard!');
+                                        setTimeout(() => setToastMessage(''), 3000);
+                                        setOpenProjectMenuId(null);
+                                      }}
+                                      className="flex items-center gap-2 w-full text-left px-3 py-2 text-[10.5px] font-bold hover:bg-accent text-foreground transition-all cursor-pointer mt-1"
+                                    >
+                                      <Link2 className="w-3.5 h-3.5" /> Copy Public Link
                                     </button>
                                     <div className="border-t border-border mt-1 pt-1">
                                       <button
@@ -988,6 +1004,24 @@ export default function Sidebar() {
           </div>
         </div>
       )}
+
+      {/* Toast Alert */}
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="fixed bottom-6 right-6 z-100 flex items-center gap-3 p-4 rounded-xl bg-primary text-primary-foreground shadow-2xl max-w-sm"
+          >
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <div className="flex-1 text-xs font-bold">
+              {toastMessage}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
