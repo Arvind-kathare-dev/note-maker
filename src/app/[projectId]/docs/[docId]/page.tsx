@@ -98,7 +98,7 @@ export default function ClientDocPage() {
     <div className="flex flex-1 overflow-hidden">
       
       <div className="flex-1 overflow-y-auto scrollbar-thin">
-        <div className="w-full py-4 px-2 sm:py-6 sm:px-6 md:px-8 space-y-6">
+        <div className="w-full py-6 px-4 sm:py-8 sm:px-8 md:px-12 lg:px-16 space-y-6 max-w-4xl mx-auto">
           
           {/* Doc Header */}
           <div className="space-y-3 pb-6 border-b border-border/30">

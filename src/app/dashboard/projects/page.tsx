@@ -18,6 +18,28 @@ import { format } from 'date-fns';
 import ProjectModal from '@/components/shared/ProjectModal';
 import ShareModal from '@/components/shared/ShareModal';
 
+const ACCENT_COLOR_MAP: Record<string, string> = {
+  blue: '#3b82f6',
+  purple: '#a855f7',
+  green: '#10b981',
+  rose: '#f43f5e',
+  red: '#ef4444',
+  amber: '#f59e0b',
+  cyan: '#06b6d4',
+  orange: '#f97316',
+  mint: '#2dd4bf',
+  crimson: '#9f1239',
+};
+
+const resolveProjectColor = (project: Project) => {
+  const accent = project.portalTheme?.accentColor;
+  if (accent) {
+    if (accent.startsWith('#')) return accent;
+    if (ACCENT_COLOR_MAP[accent]) return ACCENT_COLOR_MAP[accent];
+  }
+  return project.color || 'var(--primary)';
+};
+
 
 function ProjectCard({ project, docCount, onClick, onEdit, onDelete, onShare, isAdmin }: {
   project: Project; docCount: number;
@@ -28,8 +50,8 @@ function ProjectCard({ project, docCount, onClick, onEdit, onDelete, onShare, is
   return (
     <div
       onClick={onClick}
-      style={{ borderLeftColor: project.color || 'var(--primary)', borderLeftWidth: '4px' } as any}
-      className="group relative bg-card border border-border/40 rounded-2xl p-5 hover:border-primary/30 hover:shadow-lg transition-all cursor-pointer overflow-hidden flex flex-col justify-between min-h-[200px] h-full"
+      style={{ borderColor: resolveProjectColor(project), borderLeftWidth: '4px' } as any}
+      className="group relative bg-card border rounded-2xl p-5 hover:shadow-lg transition-all cursor-pointer overflow-hidden flex flex-col justify-between min-h-[200px] h-full"
     >
       <div className="space-y-4 relative z-10 flex-1">
         <div className="flex items-start justify-between">

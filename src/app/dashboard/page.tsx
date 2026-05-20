@@ -35,6 +35,28 @@ import { useDocumentStore } from '@/store/useDocumentStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+
+const ACCENT_COLOR_MAP: Record<string, string> = {
+  blue: '#3b82f6',
+  purple: '#a855f7',
+  green: '#10b981',
+  rose: '#f43f5e',
+  red: '#ef4444',
+  amber: '#f59e0b',
+  cyan: '#06b6d4',
+  orange: '#f97316',
+  mint: '#2dd4bf',
+  crimson: '#9f1239',
+};
+
+const resolveProjectColor = (project: { color?: string; portalTheme?: { accentColor?: string } }) => {
+  const accent = project.portalTheme?.accentColor;
+  if (accent) {
+    if (accent.startsWith('#')) return accent;
+    if (ACCENT_COLOR_MAP[accent]) return ACCENT_COLOR_MAP[accent];
+  }
+  return project.color || 'var(--primary)';
+};
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -276,7 +298,7 @@ export default function DashboardPage() {
                 const projDocs = documents.filter(d => d.projectId === project.id);
                 const publishedCount = projDocs.filter(d => d.status === 'published' || !d.status).length;
                 const progressVal = projDocs.length > 0 ? Math.round((publishedCount / projDocs.length) * 100) : 0;
-                const projectColor = project.color || 'var(--primary)';
+                const projectColor = resolveProjectColor(project);
 
                 return (
                   <div 
@@ -286,10 +308,10 @@ export default function DashboardPage() {
                       router.push(`/dashboard/projects/${project.id}`);
                     }}
                     style={{ 
-                      borderLeftColor: projectColor,
+                      borderColor: projectColor,
                       borderLeftWidth: '4px'
                     } as any}
-                    className="bg-card border border-border/40 rounded-2xl p-5 hover:border-primary/30 transition-all cursor-pointer group shadow-xs hover:shadow-lg relative overflow-hidden text-left flex flex-col justify-between min-h-[200px] h-full"
+                    className="bg-card border rounded-2xl p-5 transition-all cursor-pointer group shadow-xs hover:shadow-lg relative overflow-hidden text-left flex flex-col justify-between min-h-[200px] h-full"
                   >
                     {/* Hover highlight background glow based on project custom color */}
                     <div 
