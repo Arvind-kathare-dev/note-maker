@@ -245,7 +245,7 @@ export default function Sidebar() {
       {/* Mobile hamburger button - visible only on small screens */}
       <button
         onClick={() => setIsMobileOpen(true)}
-        className="fixed top-4 left-4 z-50 md:hidden flex items-center justify-center w-10 h-10 rounded-xl bg-card border border-border shadow-lg text-foreground hover:bg-accent transition-all cursor-pointer"
+        className="fixed top-4 left-4 z-50 lg:hidden flex items-center justify-center w-10 h-10 rounded-xl bg-card border border-border shadow-lg text-foreground hover:bg-accent transition-all cursor-pointer"
         aria-label="Open navigation"
       >
         <Menu className="w-5 h-5" />
@@ -254,7 +254,7 @@ export default function Sidebar() {
       {/* Mobile overlay backdrop */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs md:hidden"
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs lg:hidden"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
@@ -264,8 +264,8 @@ export default function Sidebar() {
         className={cn(
           "h-screen border-r border-sidebar-border bg-sidebar flex flex-col z-50 text-sidebar-foreground select-none transition-all duration-300",
           // Desktop behaviour
-          "hidden md:flex",
-          isCollapsed ? "w-20" : "w-76"
+          isMobileOpen ? "fixed inset-y-0 left-0 flex shadow-2xl" : "hidden lg:flex",
+          isCollapsed && !isMobileOpen ? "w-20" : "w-76"
         )}
       >
         {/* Veloc Branding Header */}

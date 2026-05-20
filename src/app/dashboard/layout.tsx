@@ -68,7 +68,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       
       <div className="flex-1 flex flex-col min-w-0">
         {!isZenMode && (
-          <header className="h-16 border-b border-border flex items-center justify-between pl-16 pr-4 md:px-8 bg-card/50 backdrop-blur-md sticky top-0 z-30">
+          <header className="h-16 border-b border-border flex items-center justify-between pl-16 pr-4 lg:px-8 bg-card/50 backdrop-blur-md sticky top-0 z-30">
             <div className="flex-1 max-w-xl min-w-0">
               <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground truncate">
                 <span className="truncate">Workspace</span>
@@ -88,7 +88,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-3 pl-3 pr-1 py-1 rounded-full hover:bg-accent transition-all border border-border/50 cursor-pointer">
-                  <span className="text-sm font-semibold hidden md:block">{user?.name}</span>
+                  <span className="text-sm font-semibold hidden lg:block">{user?.name}</span>
                   <Avatar className="w-8 h-8 ring-2 ring-background">
                     <AvatarImage src={user?.avatar} />
                     <AvatarFallback className="bg-primary text-primary-foreground">{user?.name.charAt(0)}</AvatarFallback>
