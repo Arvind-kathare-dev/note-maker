@@ -30,7 +30,18 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
     }
 
     // Apply Accent
-    root.setAttribute('data-accent', accentColor);
+    // Clean up legacy property from previous iterations
+    root.style.removeProperty('--accent-foreground');
+    
+    if (accentColor.startsWith('#')) {
+      root.removeAttribute('data-accent');
+      root.style.setProperty('--accent-primary', accentColor);
+      root.style.setProperty('--accent-primary-foreground', 'oklch(0.985 0 0)');
+    } else {
+      root.style.removeProperty('--accent-primary');
+      root.style.removeProperty('--accent-primary-foreground');
+      root.setAttribute('data-accent', accentColor);
+    }
 
     // Apply Font Size
     const sizeMap: Record<string, string> = {

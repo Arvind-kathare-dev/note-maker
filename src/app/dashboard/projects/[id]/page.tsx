@@ -602,9 +602,9 @@ export default function ProjectDetailPage() {
   const unfoldered = filteredDocs.filter(d => !d.folderId || d.folderId.startsWith('f_') || !projectFolders.find(f => f.id === d.folderId));
 
   return (
-    <div className="flex flex-col h-full p-6 md:p-8 max-w-7xl mx-auto w-full">
+    <div className="flex flex-col h-full p-4 md:p-8 max-w-7xl mx-auto w-full">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3 min-w-0">
           <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => router.push('/dashboard/projects')}>
             <ArrowLeft className="w-4 h-4" />
@@ -617,37 +617,43 @@ export default function ProjectDetailPage() {
             {project.description && <p className="text-xs text-muted-foreground truncate">{project.description}</p>}
           </div>
         </div>
-        <div className="flex items-center gap-2 sm:ml-auto">
+        <div className="flex flex-wrap items-center gap-2 sm:ml-auto w-full sm:w-auto justify-end">
           {isAdmin && (
             <>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setShowThemeModal(true)}
-                className="gap-2 border-border/40 hover:bg-accent font-semibold"
+                className="gap-1.5 sm:gap-2 border-border/40 hover:bg-accent font-semibold px-2.5 sm:px-3"
+                title="Portal Theme"
               >
-                <Palette className="w-3.5 h-3.5" /> Portal Theme
+                <Palette className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Portal Theme</span>
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  const url = `${window.location.origin}/public/${project.id}`;
+                  const url = `${window.location.origin}/${project.id}`;
                   navigator.clipboard.writeText(url);
                   setToastMessage('Public link copied to clipboard!');
                   setTimeout(() => setToastMessage(''), 3000);
                 }}
-                className="gap-2 border-border/40 hover:bg-accent font-semibold"
+                className="gap-1.5 sm:gap-2 border-border/40 hover:bg-accent font-semibold px-2.5 sm:px-3"
+                title="Public Link"
               >
-                <Link2 className="w-3.5 h-3.5" /> Public Link
+                <Link2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Public Link</span>
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setShowSectionsModal(true)}
-                className="gap-2 border-border/40 hover:bg-accent font-semibold"
+                className="gap-1.5 sm:gap-2 border-border/40 hover:bg-accent font-semibold px-2.5 sm:px-3"
+                title="Manage Sections"
               >
-                <Workflow className="w-3.5 h-3.5" /> Manage Sections
+                <Workflow className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Manage Sections</span>
               </Button>
             </>
           )}
@@ -662,9 +668,10 @@ export default function ProjectDetailPage() {
                   setShowSectionsModal(true);
                 }
               }}
-              className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-black cursor-pointer"
+              className="gap-1.5 sm:gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-black cursor-pointer px-2.5 sm:px-3"
             >
-              <Plus className="w-3.5 h-3.5" /> New Document
+              <Plus className="w-3.5 h-3.5" />
+              <span>New Document</span>
             </Button>
             {showNewDocDropdown && (
               <>
@@ -815,22 +822,22 @@ export default function ProjectDetailPage() {
                     </div>
                     
                     {isAdmin && (
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-start sm:justify-end">
                         {showFolderInputId === role ? (
-                          <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-3 duration-250">
+                          <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-3 duration-250 w-full sm:w-auto">
                             <Input
                               value={newFolderName}
                               onChange={e => setNewFolderName(e.target.value)}
                               placeholder="Folder name..."
-                              className="h-8 text-xs w-36 bg-background border-border"
+                              className="h-8 text-xs w-full sm:w-36 bg-background border-border"
                               autoFocus
                               onKeyDown={e => { 
                                 if (e.key === 'Enter') handleCreateFolderWithParent(`f_${role}_${project.id}`); 
                                 if (e.key === 'Escape') setShowFolderInputId(null); 
                               }}
                             />
-                            <Button size="sm" className="h-8 px-3 text-xs bg-primary text-primary-foreground hover:bg-primary/90 font-black rounded-lg" onClick={() => handleCreateFolderWithParent(`f_${role}_${project.id}`)}>Add</Button>
-                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-lg text-muted-foreground hover:text-foreground" onClick={() => setShowFolderInputId(null)}><X className="w-3.5 h-3.5" /></Button>
+                            <Button size="sm" className="h-8 px-3 text-xs bg-primary text-primary-foreground hover:bg-primary/90 font-black rounded-lg shrink-0" onClick={() => handleCreateFolderWithParent(`f_${role}_${project.id}`)}>Add</Button>
+                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-lg text-muted-foreground hover:text-foreground shrink-0" onClick={() => setShowFolderInputId(null)}><X className="w-3.5 h-3.5" /></Button>
                           </div>
                         ) : (
                           <Button 
@@ -839,7 +846,8 @@ export default function ProjectDetailPage() {
                             className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-primary hover:bg-primary/5 border border-border/20 hover:border-primary/20 rounded-xl"
                             onClick={() => { setShowFolderInputId(role); setNewFolderName(''); }}
                           >
-                            <FolderPlus className="w-3.5 h-3.5" /> New Folder
+                            <FolderPlus className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">New Folder</span>
                           </Button>
                         )}
 
@@ -848,7 +856,8 @@ export default function ProjectDetailPage() {
                           onClick={() => handleCreateDoc(null, role)}
                           className="h-8 gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-xl shadow-lg shadow-primary/10 cursor-pointer"
                         >
-                          <Plus className="w-3.5 h-3.5" /> Add Document
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Add Document</span>
                         </Button>
                       </div>
                     )}

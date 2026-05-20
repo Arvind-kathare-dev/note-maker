@@ -27,7 +27,8 @@ import {
   BookOpen,
   X,
   Link2,
-  AlertCircle
+  AlertCircle,
+  Menu
 } from 'lucide-react';
 import { cn, toSlug } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -63,6 +64,7 @@ export default function Sidebar() {
   } = useDocumentStore();
 
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -240,9 +242,29 @@ export default function Sidebar() {
 
   return (
     <>
+      {/* Mobile hamburger button - visible only on small screens */}
+      <button
+        onClick={() => setIsMobileOpen(true)}
+        className="fixed top-4 left-4 z-50 md:hidden flex items-center justify-center w-10 h-10 rounded-xl bg-card border border-border shadow-lg text-foreground hover:bg-accent transition-all cursor-pointer"
+        aria-label="Open navigation"
+      >
+        <Menu className="w-5 h-5" />
+      </button>
+
+      {/* Mobile overlay backdrop */}
+      {isMobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs md:hidden"
+          onClick={() => setIsMobileOpen(false)}
+        />
+      )}
+
+      {/* Sidebar — desktop: always visible; mobile: slide-over drawer */}
       <div
         className={cn(
-          "h-screen border-r border-sidebar-border bg-sidebar transition-all duration-300 flex flex-col z-50 text-sidebar-foreground select-none",
+          "h-screen border-r border-sidebar-border bg-sidebar flex flex-col z-50 text-sidebar-foreground select-none transition-all duration-300",
+          // Desktop behaviour
+          "hidden md:flex",
           isCollapsed ? "w-20" : "w-76"
         )}
       >
@@ -287,23 +309,12 @@ export default function Sidebar() {
                 {!isCollapsed && <span>Dashboard</span>}
               </div>
             </Link>
-            {isAdmin && (
-              <Link href="/dashboard/clients">
-                <div className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg transition-all group cursor-pointer text-xs font-bold uppercase tracking-wider",
-                  pathname === '/dashboard/clients' ? "bg-primary/10 text-primary font-extrabold" : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                )}>
-                  <Users2 className="w-4 h-4 shrink-0" />
-                  {!isCollapsed && <span>Manage Clients</span>}
-                </div>
-              </Link>
-            )}
           </div>
 
           {/* Projects and their Created Docs underneath! */}
           <div className="space-y-4">
             {!isCollapsed && (
-              <div className="flex items-center justify-between px-3 mb-1">
+              <div className="flex items-center justify-between px-3 mb-4">
                 <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
                   Module Directories
                 </p>
@@ -312,7 +323,7 @@ export default function Sidebar() {
                     onClick={() => {
                       setIsCreateProjectOpen(true);
                     }}
-                    className="p-0.5 hover:bg-accent rounded text-primary transition-all cursor-pointer"
+                    className="p-1 hover:bg-primary/10 bg-card border border-border shadow-xs rounded-md text-primary transition-all cursor-pointer"
                     title="Create New Module"
                   >
                     <Plus className="w-3.5 h-3.5" />
@@ -335,12 +346,7 @@ export default function Sidebar() {
                 return (
                   <div
                     key={project.id}
-                    className={cn(
-                      "rounded-2xl border transition-all text-left",
-                      isActiveProject
-                        ? "bg-accent/40 dark:bg-accent/20 border-primary/20 shadow-xl"
-                        : "border-transparent bg-transparent"
-                    )}
+                    className="flex flex-col relative group/module"
                   >
 
                     {/* Project Header Trigger */}
@@ -354,10 +360,18 @@ export default function Sidebar() {
                           router.push(`/dashboard/projects/${project.id}`);
                         }
                       }}
-                      className="group/proj w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl hover:bg-accent/30 text-left font-bold text-xs cursor-pointer relative"
+                      className={cn(
+                        "group/proj w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg transition-all text-left font-bold text-xs cursor-pointer relative",
+                        isActiveProject
+                          ? "bg-primary/10 text-primary"
+                          : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                      )}
                     >
+                      {isActiveProject && (
+                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-md"></div>
+                      )}
                       <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <span className="text-base shrink-0 select-none">{project.icon}</span>
+                        <span className="text-base shrink-0 select-none drop-shadow-sm">{project.icon}</span>
                         {!isCollapsed && (
                           <div className="flex flex-col min-w-0 flex-1">
                             {renamingProjectId === project.id ? (
@@ -383,15 +397,15 @@ export default function Sidebar() {
                                   setRenamingProjectId(null);
                                 }}
                                 onClick={e => e.stopPropagation()}
-                                className="bg-transparent border-b border-primary/50 text-xs font-bold focus:outline-none py-0.5 text-foreground min-w-0"
+                                className="bg-transparent border-b border-primary/50 text-[13px] font-extrabold focus:outline-none py-0.5 text-foreground min-w-0"
                               />
                             ) : (
-                              <span className={cn("truncate text-xs leading-none transition-colors select-none", isActiveProject ? "text-primary font-extrabold" : "text-muted-foreground")}>
+                              <span className={cn("truncate text-[13px] leading-tight transition-colors select-none", isActiveProject ? "font-extrabold" : "font-semibold")}>
                                 {project.name}
                               </span>
                             )}
                             <div className="flex items-center gap-1.5 mt-0.5 select-none">
-                              <span className="text-[9px] text-primary font-extrabold truncate max-w-[80px]" title={project.category || 'School Based'}>
+                              <span className={cn("text-[9px] font-extrabold truncate max-w-[80px] uppercase tracking-wider", isActiveProject ? "text-primary/70" : "text-muted-foreground")} title={project.category || 'School Based'}>
                                 {project.category || 'School Based'}
                               </span>
                             </div>
@@ -437,7 +451,7 @@ export default function Sidebar() {
                                     </button>
                                     <button
                                       onClick={() => {
-                                        const url = `${window.location.origin}/public/${toSlug(project.name)}`;
+                                        const url = `${window.location.origin}/${toSlug(project.name)}`;
                                         navigator.clipboard.writeText(url);
                                         setToastMessage('Public link copied to clipboard!');
                                         setTimeout(() => setToastMessage(''), 3000);
@@ -748,18 +762,6 @@ export default function Sidebar() {
 
         {/* Sidebar Footer */}
         <div className="p-3 mt-auto space-y-1 bg-background border-t border-border">
-          <Button
-            variant="ghost"
-            onClick={() => setIsSettingsOpen(true)}
-            className={cn(
-              "w-full justify-start gap-3 text-muted-foreground hover:text-foreground hover:bg-accent h-9 px-3 rounded-lg text-xs font-bold",
-              isCollapsed && "justify-center px-0"
-            )}
-          >
-            <Palette className="w-4 h-4" />
-            {!isCollapsed && <span>Theme settings</span>}
-          </Button>
-
           {user ? (
             <div className={cn(
               "flex items-center gap-3 p-2 rounded-lg transition-all group relative text-left",
@@ -796,26 +798,114 @@ export default function Sidebar() {
               {!isCollapsed && <span>Admin Sign In</span>}
             </Button>
           )}
+        </div>
+      </div>
 
-          {!isCollapsed ? (
-            <div className="px-2 pt-2">
-              <button
-                onClick={() => setIsCollapsed(true)}
-                className="w-full py-1 text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-primary transition-colors flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <ChevronRight className="w-3 h-3 rotate-180" /> Collapse Sidebar
-              </button>
+      {/* Mobile slide-over sidebar — shown only on small screens */}
+      <div
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 flex flex-col w-[280px] max-w-[85vw] bg-sidebar border-r border-sidebar-border text-sidebar-foreground select-none transition-transform duration-300 md:hidden",
+          isMobileOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        {/* Mobile header with close button */}
+        <div className="p-4 flex items-center justify-between border-b border-border/20 shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-primary text-primary-foreground rounded-lg flex items-center justify-center font-outfit font-black text-base">
+              V
+            </div>
+            <div>
+              <p className="font-extrabold text-sm text-foreground font-outfit tracking-wider uppercase">Veloc</p>
+              <p className="text-[9px] text-primary font-black uppercase tracking-widest leading-none">Docs Portal</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setIsMobileOpen(false)}
+            className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Mobile nav — reuse same structure as desktop */}
+        <div className="flex-1 overflow-y-auto py-4 px-3 space-y-5 scrollbar-thin">
+          <div className="space-y-1">
+            <Link href="/dashboard" onClick={() => setIsMobileOpen(false)}>
+              <div className={cn(
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all cursor-pointer text-xs font-bold uppercase tracking-wider",
+                pathname === '/dashboard' ? "bg-primary/10 text-primary font-extrabold" : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+              )}>
+                <LayoutDashboard className="w-4 h-4 shrink-0" />
+                <span>Dashboard</span>
+              </div>
+            </Link>
+          </div>
+
+          {/* Projects list for mobile */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between px-3 mb-1">
+              <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Module Directories</p>
+              {isAdmin && (
+                <button
+                  onClick={() => { setIsCreateProjectOpen(true); setIsMobileOpen(false); }}
+                  className="p-0.5 hover:bg-accent rounded text-primary transition-all cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+            <div className="space-y-2">
+              {allowedProjects.map(project => (
+                <button
+                  key={project.id}
+                  onClick={() => {
+                    setActiveProject(project.id);
+                    router.push(`/dashboard/projects/${project.id}`);
+                    setIsMobileOpen(false);
+                  }}
+                  className={cn(
+                    "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all text-left cursor-pointer",
+                    activeProjectId === project.id
+                      ? "bg-accent/40 border-primary/20 text-primary"
+                      : "border-transparent hover:bg-accent/30 text-muted-foreground"
+                  )}
+                >
+                  <span className="text-base shrink-0">{project.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold truncate">{project.name}</p>
+                    <p className="text-[9px] text-primary font-extrabold truncate">{project.category || 'School Based'}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile footer */}
+        <div className="p-3 border-t border-border bg-background shrink-0">
+          {user ? (
+            <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent group relative cursor-pointer">
+              <Avatar className="w-8 h-8 border border-border shadow-sm">
+                <AvatarImage src={user?.avatar} />
+                <AvatarFallback className="bg-primary/20 text-primary text-[10px] font-bold">{user?.name?.charAt(0) || 'U'}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-bold truncate text-foreground leading-none">{user?.name}</p>
+                <p className="text-[8px] text-muted-foreground truncate uppercase font-black tracking-widest mt-1">
+                  {isAdmin ? 'Veloc Admin' : 'Client Reader'}
+                </p>
+              </div>
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity" onClick={logout}>
+                <LogOut className="w-3.5 h-3.5 text-rose-500 cursor-pointer" />
+              </div>
             </div>
           ) : (
-            <div className="px-2 pt-2">
-              <button
-                onClick={() => setIsCollapsed(false)}
-                className="w-full py-1 text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-primary transition-colors flex items-center justify-center gap-2 cursor-pointer"
-                title="Expand Sidebar"
-              >
-                <ChevronRight className="w-3 h-3" />
-              </button>
-            </div>
+            <Button
+              onClick={() => { router.push('/login'); setIsMobileOpen(false); }}
+              className="w-full bg-primary hover:bg-primary/95 text-primary-foreground font-black text-[10px] uppercase tracking-wider rounded-xl h-9 cursor-pointer"
+            >
+              <Lock className="w-3.5 h-3.5 shrink-0 mr-2" /> Admin Sign In
+            </Button>
           )}
         </div>
       </div>

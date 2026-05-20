@@ -15,7 +15,7 @@ import { useDocumentStore, Doc } from '@/store/useDocumentStore';
 import { useProjectStore } from '@/store/useProjectStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import TipTapEditor from '@/components/features/editor/TipTapEditor';
-import ShareModal from '@/components/features/editor/ShareModal';
+
 import '@/components/features/editor/editor.css';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -206,7 +206,7 @@ export default function DocumentPage() {
   
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
   const [showInfo, setShowInfo] = useState(false);
   const [editorMode, setEditorMode] = useState<'rich' | 'markdown' | 'preview'>('rich');
   const [tocHeadings, setTocHeadings] = useState<TableOfContentHeading[]>([]);
@@ -414,14 +414,14 @@ export default function DocumentPage() {
       )}
 
       {/* Navigation Header */}
-      <header className="h-14 border-b border-border bg-card/90 backdrop-blur-xl sticky top-0 z-40 px-4 flex items-center justify-between">
+      <header className="min-h-14 h-auto py-2.5 sm:py-0 sm:h-14 border-b border-border bg-card/90 backdrop-blur-xl sticky top-0 z-40 px-3 sm:px-4 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5">
         
         {/* Left Side: Back & Title */}
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-8 w-8 rounded-xl shrink-0 hover:bg-accent text-muted-foreground hover:text-foreground">
             <ArrowLeft className="w-4 h-4" />
           </Button>
-
+ 
           <div className="flex items-center gap-2 min-w-0 max-w-lg">
             <span className="text-xl shrink-0 select-none">{doc.emoji || '📄'}</span>
             <input
@@ -435,7 +435,7 @@ export default function DocumentPage() {
               placeholder="Untitled Document"
             />
           </div>
-
+ 
           {/* Quick Info pill */}
           <div className="hidden lg:flex items-center gap-2 shrink-0 ml-4">
             <span className={cn('text-[9px] font-black uppercase px-2 py-0.5 rounded-md tracking-wider leading-none', statusMeta.color)}>
@@ -450,9 +450,9 @@ export default function DocumentPage() {
             ))}
           </div>
         </div>
-
+ 
         {/* Right Side: Action Panel */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 shrink-0 justify-end w-full sm:w-auto">
           
           {/* Reader Access Verification Badge */}
           {isReadOnly && (
@@ -460,10 +460,10 @@ export default function DocumentPage() {
               <ShieldCheck className="w-3.5 h-3.5" /> {user ? 'Client View Access' : 'Guest View Access'}
             </div>
           )}
-
+ 
           {/* Editor Mode Tabs (Edit / Markdown / Preview) - Only visible to writers (Admins) */}
           {!isReadOnly && (
-            <div className="flex items-center gap-0.5 bg-muted border border-border p-0.5 rounded-xl mr-2 shadow-inner">
+            <div className="flex items-center gap-0.5 bg-muted border border-border p-0.5 rounded-xl shadow-inner">
               <Button
                 variant="ghost"
                 size="sm"
@@ -505,7 +505,7 @@ export default function DocumentPage() {
               </Button>
             </div>
           )}
-
+ 
           {/* Info toggle */}
           {!isReadOnly && (
             <Button
@@ -517,44 +517,42 @@ export default function DocumentPage() {
               <Info className="w-4 h-4" />
             </Button>
           )}
-
+ 
           {/* Download PDF */}
           <Button
             variant="outline" size="sm"
             onClick={handleDownloadPDF}
-            className="h-8 rounded-xl gap-1.5 px-3 text-[10px] font-bold uppercase tracking-wider bg-accent border-border hover:bg-accent/80 text-foreground hover:text-foreground transition-colors"
+            className="h-8 rounded-xl gap-1 sm:gap-1.5 px-2.5 sm:px-3 text-[10px] font-bold uppercase tracking-wider bg-accent border-border hover:bg-accent/80 text-foreground hover:text-foreground transition-colors"
           >
-            <Printer className="w-3.5 h-3.5 text-muted-foreground" /> Download PDF
+            <Printer className="w-3.5 h-3.5 text-muted-foreground" />
+            <span className="hidden sm:inline">Download PDF</span>
           </Button>
-
+ 
           {/* Save button (Only shown to writers) */}
           {!isReadOnly && (
             <Button
               onClick={handleSave}
               size="sm"
               className={cn(
-                "h-8 rounded-xl gap-1.5 px-3 text-[10px] font-bold uppercase tracking-wider transition-all",
+                "h-8 rounded-xl gap-1 sm:gap-1.5 px-2.5 sm:px-3 text-[10px] font-bold uppercase tracking-wider transition-all",
                 saved ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "bg-primary text-primary-foreground hover:bg-primary/95"
               )}
               disabled={saving}
             >
               {saved ? (
-                <><Check className="w-3.5 h-3.5" /> Saved</>
+                <><Check className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Saved</span></>
               ) : saving ? (
-                <><span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" /> Saving…</>
+                <><span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" /> <span className="hidden sm:inline">Saving…</span></>
               ) : (
-                <><Save className="w-3.5 h-3.5" /> Save Changes</>
+                <><Save className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Save Changes</span></>
               )}
             </Button>
           )}
+ 
 
-          {/* Share */}
-          <Button onClick={() => setIsShareModalOpen(true)} size="sm" className="h-8 rounded-xl px-3 text-[10px] font-bold uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/95">
-            Share Doc
-          </Button>
         </div>
       </header>
-
+ 
       {/* Main Core Body (Split layout: Left Info panel, Center Document, Right TOC) */}
       <div className="flex flex-1 overflow-hidden relative">
         
@@ -567,10 +565,10 @@ export default function DocumentPage() {
             sections={sections}
           />
         )}
-
+ 
         {/* Center Document Container */}
         <div className="flex-1 overflow-y-auto relative w-full scrollbar-thin">
-          <div className="max-w-4xl mx-auto py-12 px-6 md:px-12 lg:px-16 space-y-8">
+          <div className="max-w-4xl mx-auto py-6 sm:py-12 px-4 sm:px-12 lg:px-16 space-y-8">
             
             {/* Read-Only Top Page Banner */}
             {isReadOnly && (
@@ -582,7 +580,7 @@ export default function DocumentPage() {
                 </div>
               </div>
             )}
-
+ 
             {/* Document Core Content */}
             <div id="document-content-area" className={cn(
               "bg-transparent relative",
@@ -604,7 +602,7 @@ export default function DocumentPage() {
                 <span className="text-foreground hover:text-primary transition-colors font-black">Veloc</span>
               </div>
             </div>
-
+ 
           </div>
         </div>
 
@@ -641,7 +639,7 @@ export default function DocumentPage() {
 
       </div>
 
-      <ShareModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} docTitle={doc.title} />
+
     </div>
   );
 }

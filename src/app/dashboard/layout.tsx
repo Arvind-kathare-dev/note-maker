@@ -1,7 +1,7 @@
 'use client';
 
 import Sidebar from '@/components/shared/Sidebar';
-import { Bell } from 'lucide-react';
+import { Sun, Moon } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   DropdownMenu, 
@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useZenStore } from '@/store/useZenStore';
+import { useThemeStore } from '@/store/useThemeStore';
 import { useEffect } from 'react';
 import axios from 'axios';
 import { useProjectStore } from '@/store/useProjectStore';
@@ -24,6 +25,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { isZenMode } = useZenStore();
   const { fetchProjects } = useProjectStore();
   const { fetchFolders, fetchDocuments } = useDocumentStore();
+  const { mode, setMode } = useThemeStore();
   const router = useRouter();
 
   useEffect(() => {
@@ -66,24 +68,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       
       <div className="flex-1 flex flex-col min-w-0">
         {!isZenMode && (
-          <header className="h-16 border-b border-border flex items-center justify-between px-8 bg-card/50 backdrop-blur-md sticky top-0 z-30">
-            <div className="flex-1 max-w-xl">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>Workspace</span>
+          <header className="h-16 border-b border-border flex items-center justify-between pl-16 pr-4 md:px-8 bg-card/50 backdrop-blur-md sticky top-0 z-30">
+            <div className="flex-1 max-w-xl min-w-0">
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground truncate">
+                <span className="truncate">Workspace</span>
                 <span className="text-border">/</span>
-                <span className="text-foreground font-medium">Dashboard</span>
+                <span className="text-foreground font-medium truncate">Dashboard</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
-              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/50 border border-border">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">System Online</span>
-              </div>
-
-              <button className="w-10 h-10 rounded-full hover:bg-accent flex items-center justify-center text-muted-foreground transition-all relative">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-primary rounded-full border-2 border-background"></span>
+            <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+              <button 
+                onClick={() => setMode(mode === 'dark' ? 'light' : 'dark')}
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full hover:bg-accent flex items-center justify-center text-muted-foreground transition-all cursor-pointer"
+                title={mode === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              >
+                {mode === 'dark' ? <Sun className="w-4 h-4 sm:w-5 sm:h-5" /> : <Moon className="w-4 h-4 sm:w-5 sm:h-5" />}
               </button>
 
               <DropdownMenu>

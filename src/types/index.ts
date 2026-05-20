@@ -3,8 +3,9 @@ export type Role = 'SUPER_ADMIN' | 'ADMIN' | 'PROJECT_MANAGER' | 'DEVELOPER' | '
 export interface UserPreferences {
   theme: 'dark' | 'light' | 'system';
   sidebarLayout: 'default' | 'compact';
-  fontFamily: 'Inter' | 'Outfit' | 'Roboto';
-  accentColor?: 'blue' | 'purple' | 'green' | 'amber' | 'rose' | 'slate';
+  fontFamily: string;
+  accentColor?: string;
+  fontSize?: string;
 }
 
 export interface User {

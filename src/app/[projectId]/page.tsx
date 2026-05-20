@@ -22,7 +22,7 @@ export default function ClientProjectPage() {
   // Auto-navigate to first doc
   useEffect(() => {
     if (projectDocs.length > 0) {
-      router.replace(`/public/${projectId}/docs/${toSlug(projectDocs[0].title)}`);
+      router.replace(`/${projectId}/docs/${toSlug(projectDocs[0].title)}`);
     }
   }, [projectDocs, projectId, router]);
 

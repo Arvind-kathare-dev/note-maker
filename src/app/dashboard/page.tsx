@@ -24,11 +24,13 @@ import {
   ShieldAlert,
   Briefcase,
   History,
-  FolderOpen
+  FolderOpen,
+  Pin,
+  Send
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useProjectStore } from '@/store/useProjectStore';
+import { useProjectStore, Project } from '@/store/useProjectStore';
 import { useDocumentStore } from '@/store/useDocumentStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { format } from 'date-fns';
@@ -36,13 +38,15 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import ShareModal from '@/components/shared/ShareModal';
 
 export default function DashboardPage() {
   const router = useRouter();
   const { projects, setActiveProject } = useProjectStore();
-  const { documents, setActiveDoc, createDocument } = useDocumentStore();
+  const { documents, setActiveDoc, createDocument, togglePin } = useDocumentStore();
   const { user } = useAuthStore();
   const [filterProjectId, setFilterProjectId] = useState<string>('all');
+  const [shareProject, setShareProject] = useState<Project | null>(null);
 
   const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN' || user?.role === 'admin';
 
@@ -67,6 +71,7 @@ export default function DashboardPage() {
     ? allowedDocs
     : allowedDocs.filter(d => d.projectId === filterProjectId);
 
+  const pinnedDocs = allowedDocs.filter(d => d.isPinned);
   const recentDocs = filteredDocs.slice(0, 5);
   const recentProjects = allowedProjects.slice(0, 4);
 
@@ -266,7 +271,7 @@ export default function DashboardPage() {
               </Link>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               {recentProjects.map(project => {
                 const projDocs = documents.filter(d => d.projectId === project.id);
                 const publishedCount = projDocs.filter(d => d.status === 'published' || !d.status).length;
@@ -284,7 +289,7 @@ export default function DashboardPage() {
                       borderLeftColor: projectColor,
                       borderLeftWidth: '4px'
                     } as any}
-                    className="bg-card border border-border/40 hover:border-primary/30 transition-all rounded-2xl p-5 cursor-pointer group shadow-xs hover:shadow-lg relative overflow-hidden text-left flex flex-col justify-between min-h-[200px]"
+                    className="bg-card border border-border/40 rounded-2xl p-5 hover:border-primary/30 transition-all cursor-pointer group shadow-xs hover:shadow-lg relative overflow-hidden text-left flex flex-col justify-between min-h-[200px] h-full"
                   >
                     {/* Hover highlight background glow based on project custom color */}
                     <div 
@@ -293,11 +298,20 @@ export default function DashboardPage() {
                     />
                     
                     <div className="space-y-4 relative z-10">
-                      <div className="flex items-start justify-between">
-                        <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-900 border border-border/30 flex items-center justify-center text-lg shadow-inner shrink-0 select-none">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0" style={{ backgroundColor: projectColor + '20' }}>
                           {project.icon}
                         </div>
                         <div className="flex items-center gap-1.5">
+                          {isAdmin && (
+                            <button
+                              onClick={e => { e.stopPropagation(); setShareProject(project); }}
+                              className="h-7 w-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors opacity-0 group-hover:opacity-100"
+                              title="Share Module"
+                            >
+                              <Send className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                           <span className="text-[8px] font-black text-primary uppercase bg-primary/10 px-2 py-0.5 rounded-lg border border-primary/20">
                             {project.category || 'School Based'}
                           </span>
@@ -335,6 +349,64 @@ export default function DashboardPage() {
               })}
             </div>
           </div>
+
+          {/* Section: Pinned Documents */}
+          {pinnedDocs.length > 0 && (
+            <div className="space-y-5 pt-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="text-left">
+                  <h2 className="text-lg font-extrabold tracking-tight text-slate-900 dark:text-slate-100 uppercase font-outfit flex items-center gap-2">
+                    <Pin className="w-5 h-5 text-primary" /> Pinned Documents
+                  </h2>
+                  <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Quick access to important manuals</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {pinnedDocs.map(doc => {
+                  const project = projects.find(p => p.id === doc.projectId);
+                  return (
+                    <div 
+                      key={doc.id} 
+                      onClick={() => handleOpenDoc(doc.id, doc.projectId || 'p1')}
+                      className="bg-card border border-border/40 hover:border-primary/50 transition-all rounded-xl p-4 cursor-pointer group shadow-xs hover:shadow-md text-left flex items-start gap-3 relative overflow-hidden"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center text-lg shadow-inner shrink-0 group-hover:scale-105 transition-transform">
+                        {doc.emoji || '📄'}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-extrabold text-sm mb-0.5 group-hover:text-primary transition-colors text-slate-900 dark:text-slate-100 truncate pr-4">
+                          {doc.title}
+                        </h4>
+                        <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-wider flex-wrap mt-1.5">
+                          <span className="text-primary truncate max-w-[80px]">{getCategoryLabel(doc.category)}</span>
+                          {project && (
+                            <>
+                              <span className="text-slate-300 dark:text-slate-700 font-bold select-none">•</span>
+                              <span className="text-slate-400 truncate max-w-[80px]">{project.name}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div className="absolute top-3 right-3 z-20">
+                        {isAdmin ? (
+                          <button
+                            onClick={e => { e.stopPropagation(); togglePin(doc.id); }}
+                            className="p-1.5 rounded-md hover:bg-primary/10 text-primary opacity-50 group-hover:opacity-100 transition-all cursor-pointer"
+                            title="Unpin Document"
+                          >
+                            <Pin className="w-3.5 h-3.5" />
+                          </button>
+                        ) : (
+                          <Pin className="w-3.5 h-3.5 text-primary opacity-50 group-hover:opacity-100 transition-opacity m-1.5" />
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Section: Recent Documentation Operations */}
           <div className="space-y-5 pt-2">
@@ -403,8 +475,8 @@ export default function DashboardPage() {
                           {project && (
                             <span className="text-slate-400 truncate max-w-[100px]">{project.name}</span>
                           )}
-                          <span className="text-slate-350 dark:text-slate-700 font-bold select-none">•</span>
-                          <span className="text-slate-500 font-semibold">{format(new Date(doc.updatedAt), 'MMM d, yyyy')}</span>
+                          <span className="text-slate-350 dark:text-slate-700 font-bold select-none hidden sm:inline">•</span>
+                          <span className="text-slate-500 font-semibold hidden sm:inline">{format(new Date(doc.updatedAt), 'MMM d, yyyy')}</span>
                         </div>
                       </div>
                     </div>
@@ -522,6 +594,10 @@ export default function DashboardPage() {
         </div>
 
       </div>
+
+      {shareProject && (
+        <ShareModal project={shareProject} onClose={() => setShareProject(null)} />
+      )}
 
     </div>
   );

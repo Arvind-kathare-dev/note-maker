@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
-export type AccentColor = 'blue' | 'purple' | 'green' | 'amber' | 'rose' | 'slate' | 'orange' | 'mint' | 'crimson';
+export type AccentColor = string;
 export type FontFamily = 'inter' | 'outfit' | 'roboto' | 'montserrat' | 'mono';
 export type FontSize = 'sm' | 'base' | 'lg' | 'xl';
 

@@ -42,7 +42,7 @@ export default function ClientSidebar({ projectId, onClose }: ClientSidebarProps
   };
 
   const navigate = (doc: any) => {
-    const basePath = pathname?.startsWith('/public') ? '/public' : '/client';
+    const basePath = pathname?.startsWith('/client') ? '/client' : '';
     router.push(`${basePath}/${projectId}/docs/${toSlug(doc.title)}`);
     onClose?.();
   };

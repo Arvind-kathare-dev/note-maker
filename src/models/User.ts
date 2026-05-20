@@ -24,8 +24,9 @@ const UserSchema: Schema = new Schema(
     preferences: {
       theme: { type: String, default: 'dark' },
       sidebarLayout: { type: String, default: 'default' },
-      fontFamily: { type: String, default: 'Inter' },
-      accentColor: { type: String, default: 'blue' }
+      fontFamily: { type: String, default: 'inter' },
+      accentColor: { type: String, default: 'blue' },
+      fontSize: { type: String, default: 'base' }
     }
   },
   { timestamps: true }
