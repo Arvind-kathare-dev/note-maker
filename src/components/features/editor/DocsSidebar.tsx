@@ -114,7 +114,7 @@ export default function DocsSidebar({ onMobileClose }: { onMobileClose?: () => v
             <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-1.5 min-w-0">
                 <span className="font-extrabold text-xs tracking-wider uppercase text-foreground font-outfit truncate">
-                  {activeProject?.name || 'Project'} Docs
+                  {activeProject?.name || 'Module'} Docs
                 </span>
                 {activeProfile.isWriter && (
                   <button

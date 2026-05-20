@@ -98,30 +98,30 @@ export default function DashboardPage() {
 
           <div className="space-y-2">
             <h1 className="text-3xl font-black font-outfit uppercase tracking-tight text-slate-900 dark:text-slate-100">
-              No Projects Registered
+              No Modules Registered
             </h1>
             <p className="text-sm text-slate-500 font-bold uppercase tracking-wider">
               Veloc database is currently pristine
             </p>
           </div>
-
+ 
           <p className="text-sm text-slate-500 dark:text-slate-400 font-semibold leading-relaxed max-w-md">
-            There are no active projects configured in your database directory. Start organizing your workflows, developer specs, and company SOPs today!
+            There are no active modules configured in your database directory. Start organizing your workflows, developer specs, and company SOPs today!
           </p>
-
+ 
           <div className="pt-2 flex flex-col items-center gap-3">
             {isAdmin ? (
               <Button 
                 onClick={() => router.push('/dashboard/projects')} 
                 className="bg-primary hover:bg-primary/90 text-primary-foreground font-black text-xs uppercase tracking-wider px-6 h-12 rounded-xl transition-all shadow-lg shadow-primary/15 cursor-pointer animate-pulse"
               >
-                <Plus className="w-4 h-4 mr-2" /> Create First Project
+                <Plus className="w-4 h-4 mr-2" /> Create First Module
               </Button>
             ) : (
               <div className="inline-flex items-center gap-2 bg-slate-100 dark:bg-[#0c1527]/60 border border-border/40 rounded-xl px-4 py-2.5 backdrop-blur-md">
                 <Lock className="w-4 h-4 text-primary" />
                 <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
-                  Reader Status · Contact Administrator to Assign Projects
+                  Reader Status · Contact Administrator to Assign Modules
                 </span>
               </div>
             )}
@@ -186,7 +186,7 @@ export default function DashboardPage() {
             Veloc Docs Portal
           </h1>
           <p className="text-sm md:text-base text-slate-600 dark:text-slate-300 font-medium leading-relaxed max-w-2xl">
-            Welcome back, <span className="font-extrabold text-slate-900 dark:text-white">{user?.name}</span>. Explore systematic, project-wise module onboarding flows, developer APIs, and operational guidelines optimized for your custom access profile.
+            Welcome back, <span className="font-extrabold text-slate-900 dark:text-white">{user?.name}</span>. Explore systematic, module-wise onboarding flows, developer APIs, and operational guidelines optimized for your custom access profile.
           </p>
           <div className="flex flex-wrap gap-4 pt-2">
             {isAdmin ? (
@@ -225,7 +225,7 @@ export default function DashboardPage() {
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {[
-            { title: "Workspace Directories", value: totalProjectsCount, desc: "Active project suites", icon: FolderKanban, color: "text-primary bg-primary/10" },
+            { title: "Workspace Directories", value: totalProjectsCount, desc: "Active module suites", icon: FolderKanban, color: "text-primary bg-primary/10" },
             { title: "Published Manuals", value: publishedDocsCount, desc: "Live client & staff guides", icon: FileText, color: "text-emerald-500 bg-emerald-500/10" },
             { title: "Drafts & Revisions", value: draftDocsCount, desc: "In-progress revisions", icon: Activity, color: "text-amber-500 bg-amber-500/10" },
             { title: "Configured Sections", value: totalSectionsCount, desc: "Custom module sections", icon: Compass, color: "text-sky-500 bg-sky-500/10" }

@@ -8,7 +8,7 @@ import { useDocumentStore } from '@/store/useDocumentStore';
 import ClientSidebar from '@/components/features/client/ClientSidebar';
 import { LogOut, Menu, X, Sun, Moon } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { cn } from '@/lib/utils';
+import { cn, toSlug } from '@/lib/utils';
 
 export default function ClientPortalLayout({ children }: { children: React.ReactNode }) {
   const params = useParams();
@@ -53,8 +53,11 @@ export default function ClientPortalLayout({ children }: { children: React.React
       return;
     }
 
+    const project = projects.find(p => p.id === projectId || toSlug(p.name) === projectId);
+    const resolvedProjectId = project?.id || projectId;
+
     // Client accessing wrong project → redirect to their project
-    if (assignedProject && assignedProject !== projectId) {
+    if (assignedProject && assignedProject !== resolvedProjectId) {
       router.replace(`/client/${assignedProject}`);
       return;
     }
@@ -66,11 +69,11 @@ export default function ClientPortalLayout({ children }: { children: React.React
       setLoaded(true);
     };
     init();
-  }, [isAuthenticated, router, projectId]);
+  }, [isAuthenticated, router, projectId, projects]);
 
   // Apply project portal theme — runs whenever projects data loads/changes
   useEffect(() => {
-    const project = projects.find(p => p.id === projectId);
+    const project = projects.find(p => p.id === projectId || toSlug(p.name) === projectId);
     if (!project) return; // still loading
 
     // Use saved theme or fall back to sensible defaults
@@ -162,7 +165,7 @@ export default function ClientPortalLayout({ children }: { children: React.React
   };
 
   // Derive icon: clientMode overrides project default
-  const project = projects.find(p => p.id === projectId);
+  const project = projects.find(p => p.id === projectId || toSlug(p.name) === projectId);
   const projectDefaultMode = project?.portalTheme?.mode || 'dark';
   const isDarkMode = clientMode ? clientMode === 'dark' : projectDefaultMode === 'dark';
 

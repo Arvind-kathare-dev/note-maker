@@ -43,7 +43,7 @@ function ProjectCard({ project, docCount, onClick, onEdit, onDelete }: {
         {menuOpen && (
           <div className="absolute right-4 top-14 z-50 bg-card border border-border rounded-xl shadow-2xl py-1 w-40" onClick={e => e.stopPropagation()}>
             <button onClick={() => { onEdit(); setMenuOpen(false); }} className="w-full text-left px-3 py-2 text-sm hover:bg-accent flex items-center gap-2">
-              <Edit3 className="w-3.5 h-3.5" /> Edit Project
+              <Edit3 className="w-3.5 h-3.5" /> Edit Module
             </button>
             <button onClick={() => { onDelete(); setMenuOpen(false); }} className="w-full text-left px-3 py-2 text-sm hover:bg-accent text-rose-500 flex items-center gap-2">
               <Trash2 className="w-3.5 h-3.5" /> Delete

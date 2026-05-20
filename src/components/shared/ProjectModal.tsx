@@ -29,10 +29,6 @@ const SECTION_ICON_OPTIONS = [
 ].map(opt => ({ value: opt.emoji, label: opt.label }));
 
 const PROJECT_ICONS = ['🌱', '🚀', '🛒', '⚡', '📦', '🏕️', '🎯', '🔥', '💡', '🛠️', '📊', '🎨', '🔬'];
-const PROJECT_COLORS = [
-  '#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
-  '#06b6d4', '#ec4899', '#14b8a6', '#f97316', '#84cc16',
-];
 
 interface ProjectModalProps {
   project?: Project;
@@ -173,36 +169,16 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
               </div>
             </div>
 
-            {/* Color Picker Grid */}
+            {/* Color Selector */}
             <div className="space-y-1.5 flex flex-col justify-between">
               <div>
-                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block mb-1.5">Color</label>
-                <div className="flex flex-wrap gap-1.5 p-2 bg-background border border-border rounded-xl items-center">
-                  {PROJECT_COLORS.map(c => (
-                    <button
-                      key={c} 
-                      type="button"
-                      onClick={() => setColor(c)}
-                      className={cn(
-                        'w-5.5 h-5.5 rounded-md transition-all cursor-pointer shrink-0', 
-                        color === c ? 'ring-2 ring-offset-2 ring-offset-background ring-primary scale-110' : 'hover:scale-105'
-                      )}
-                      style={{ backgroundColor: c }}
-                    />
-                  ))}
-                  
-                  {/* Custom Color Selector */}
+                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block mb-1.5">Module Theme Color</label>
+                <div className="flex items-center gap-3 p-2.5 bg-background border border-border rounded-xl">
+                  {/* Interactive Color Circle Button */}
                   <label 
-                    className={cn(
-                      'w-5.5 h-5.5 rounded-md transition-all cursor-pointer shrink-0 flex items-center justify-center relative overflow-hidden border border-border hover:scale-105',
-                      !PROJECT_COLORS.includes(color) ? 'ring-2 ring-offset-2 ring-offset-background ring-primary scale-110' : ''
-                    )}
-                    style={{ 
-                      background: !PROJECT_COLORS.includes(color) 
-                        ? color 
-                        : 'linear-gradient(45deg, #ff0000 0%, #ff7f00 15%, #ffff00 30%, #00ff00 45%, #0000ff 60%, #4b0082 75%, #8b00ff 100%)' 
-                    }}
-                    title="Choose custom color"
+                    className="w-10 h-10 rounded-xl transition-all cursor-pointer shrink-0 flex items-center justify-center relative overflow-hidden border border-border/80 hover:scale-105 active:scale-95 shadow-md shadow-black/10 group"
+                    style={{ backgroundColor: color }}
+                    title="Click to choose color"
                   >
                     <input 
                       type="color" 
@@ -210,10 +186,31 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                       onChange={e => setColor(e.target.value)}
                       className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                     />
-                    {PROJECT_COLORS.includes(color) && (
-                      <span className="text-[10px] text-white font-black drop-shadow-md select-none pointer-events-none">+</span>
-                    )}
+                    <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[9px] font-black uppercase tracking-wider select-none pointer-events-none">
+                      Pick
+                    </div>
                   </label>
+
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Add Color</span>
+                      <span className="text-[9px] font-black text-primary uppercase bg-primary/10 px-1.5 py-0.5 rounded-sm border border-primary/20">Hex</span>
+                    </div>
+                    <input
+                      type="text"
+                      value={color}
+                      onChange={e => {
+                        const val = e.target.value;
+                        if (val.startsWith('#') && val.length <= 7) {
+                          setColor(val);
+                        } else if (!val.startsWith('#') && val.length <= 6) {
+                          setColor('#' + val);
+                        }
+                      }}
+                      placeholder="#6366f1"
+                      className="w-full bg-accent/40 border border-border/60 rounded-lg px-2.5 py-1 text-xs font-black tracking-wider text-foreground focus:outline-none focus:border-primary/50 uppercase transition-all"
+                    />
+                  </div>
                 </div>
               </div>
               
@@ -225,7 +222,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                 >
                   {icon}
                 </div>
-                <span className="text-[11px] font-bold text-foreground truncate max-w-[80px]">{name || 'Module Name'}</span>
+                <span className="text-[11px] font-bold text-foreground truncate max-w-[120px]">{name || 'Module Name'}</span>
               </div>
             </div>
 

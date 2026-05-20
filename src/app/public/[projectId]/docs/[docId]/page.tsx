@@ -8,7 +8,7 @@ import TipTapEditor from '@/components/features/editor/TipTapEditor';
 import '@/components/features/editor/editor.css';
 import { format } from 'date-fns';
 import { Clock, Printer, BookOpen, ChevronRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, toSlug } from '@/lib/utils';
 
 interface TocHeading {
   text: string;
@@ -25,8 +25,9 @@ export default function ClientDocPage() {
   const { documents, setActiveDoc } = useDocumentStore();
   const { projects } = useProjectStore();
 
-  const doc = documents.find(d => d.id === docId);
-  const project = projects.find(p => p.id === projectId);
+  const project = projects.find(p => p.id === projectId || toSlug(p.name) === projectId);
+  const resolvedProjectId = project?.id || projectId;
+  const doc = documents.find(d => d.projectId === resolvedProjectId && (d.id === docId || toSlug(d.title) === docId));
   const [tocHeadings, setTocHeadings] = useState<TocHeading[]>([]);
   const [activeHeadingId, setActiveHeadingId] = useState('');
 
@@ -72,7 +73,7 @@ export default function ClientDocPage() {
             onClick={() => router.push(`/public/${projectId}`)}
             className="text-[10px] font-black uppercase tracking-wider text-primary hover:text-primary/80 transition-colors"
           >
-            ← Back to Project
+            ← Back to Module
           </button>
         </div>
       </div>
@@ -88,8 +89,8 @@ export default function ClientDocPage() {
   };
 
   // Find prev/next docs in same project (published only)
-  const projectDocs = documents.filter(d => d.projectId === projectId && d.status === 'published');
-  const currentIndex = projectDocs.findIndex(d => d.id === docId);
+  const projectDocs = documents.filter(d => d.projectId === resolvedProjectId && d.status === 'published');
+  const currentIndex = projectDocs.findIndex(d => d.id === docId || toSlug(d.title) === docId);
   const prevDoc = currentIndex > 0 ? projectDocs[currentIndex - 1] : null;
   const nextDoc = currentIndex < projectDocs.length - 1 ? projectDocs[currentIndex + 1] : null;
 
@@ -141,7 +142,7 @@ export default function ClientDocPage() {
           <div className="pt-8 border-t border-border/20 flex flex-col sm:flex-row gap-4 justify-between items-center pb-8">
             {prevDoc ? (
               <button
-                onClick={() => router.push(`/public/${projectId}/docs/${prevDoc.id}`)}
+                onClick={() => router.push(`/public/${projectId}/docs/${toSlug(prevDoc.title)}`)}
                 className="flex flex-col items-start p-3.5 px-5 rounded-xl border border-border hover:border-primary/40 hover:bg-accent/50 transition-all group max-w-xs w-full text-left"
               >
                 <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-0.5">← Previous</span>
@@ -150,7 +151,7 @@ export default function ClientDocPage() {
             ) : <div className="hidden sm:block" />}
             {nextDoc ? (
               <button
-                onClick={() => router.push(`/public/${projectId}/docs/${nextDoc.id}`)}
+                onClick={() => router.push(`/public/${projectId}/docs/${toSlug(nextDoc.title)}`)}
                 className="flex flex-col items-end p-3.5 px-5 rounded-xl border border-border hover:border-primary/40 hover:bg-accent/50 transition-all group max-w-xs w-full text-right"
               >
                 <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-0.5">Next →</span>

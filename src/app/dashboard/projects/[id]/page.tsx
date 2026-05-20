@@ -33,18 +33,17 @@ const SECTION_ICON_OPTIONS = [
 
 type Tab = 'docs' | 'recent';
 
-// ── Accent palette (matches global CSS data-accent values) ───────────────────
-const ACCENT_OPTIONS = [
-  { value: 'blue',    label: 'Ocean Blue',   dot: 'bg-blue-500' },
-  { value: 'purple',  label: 'Royal Purple', dot: 'bg-purple-500' },
-  { value: 'green',   label: 'Forest Green', dot: 'bg-emerald-500' },
-  { value: 'rose',    label: 'Rose Red',     dot: 'bg-rose-500' },
-  { value: 'amber',   label: 'Amber Gold',   dot: 'bg-amber-500' },
-  { value: 'cyan',    label: 'Cyan Teal',    dot: 'bg-cyan-500' },
-  { value: 'orange',  label: 'Sunset Orange', dot: 'bg-orange-500' },
-  { value: 'mint',    label: 'Emerald Mint',  dot: 'bg-teal-400' },
-  { value: 'crimson', label: 'Crimson Red',  dot: 'bg-rose-800' },
-];
+const ACCENT_COLOR_MAP: Record<string, string> = {
+  blue: '#3b82f6',
+  purple: '#a855f7',
+  green: '#10b981',
+  rose: '#f43f5e',
+  amber: '#f59e0b',
+  cyan: '#06b6d4',
+  orange: '#f97316',
+  mint: '#2dd4bf',
+  crimson: '#9f1239',
+};
 
 const FONT_OPTIONS = [
   { value: 'inter',       label: 'Inter',       preview: 'Aa' },
@@ -112,78 +111,60 @@ function PortalThemeModal({ project, onClose }: { project: any; onClose: () => v
           {/* Accent colour */}
           <div className="space-y-2">
             <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Accent Colour</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-              {ACCENT_OPTIONS.map(opt => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setTheme(t => ({ ...t, accentColor: opt.value }))}
-                  className={cn(
-                    'flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-xs font-bold transition-all truncate hover:shadow-xs hover:border-primary/20 cursor-pointer',
-                    theme.accentColor === opt.value
-                      ? 'bg-primary/10 border-primary text-primary'
-                      : 'border-border hover:bg-accent text-muted-foreground'
-                  )}
-                >
-                  <span className={cn('w-3 h-3 rounded-full shrink-0 shadow-sm', opt.dot)} />
-                  <span className="truncate">{opt.label}</span>
-                  {theme.accentColor === opt.value && <Check className="w-3.5 h-3.5 ml-auto shrink-0" />}
-                </button>
-              ))}
-
-              {/* Custom Color Selector Button */}
-              <label
-                className={cn(
-                  'flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-xs font-bold transition-all truncate hover:shadow-xs hover:border-primary/20 cursor-pointer relative overflow-hidden select-none',
-                  theme.accentColor.startsWith('#')
-                    ? 'bg-primary/10 border-primary text-primary'
-                    : 'border-border hover:bg-accent text-muted-foreground'
-                )}
-              >
+            
+            <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center bg-accent/10 border border-border p-4 rounded-2xl animate-in fade-in duration-200">
+              {/* Color Swatch & System Picker */}
+              <label className="flex items-center justify-center w-14 h-14 rounded-xl border border-border hover:border-primary/55 cursor-pointer relative transition-all group overflow-hidden bg-card shadow-sm shrink-0">
                 <input
                   type="color"
-                  value={theme.accentColor.startsWith('#') ? theme.accentColor : '#6366f1'}
+                  value={theme.accentColor.startsWith('#') ? theme.accentColor : (ACCENT_COLOR_MAP[theme.accentColor] || '#6366f1')}
                   onChange={e => setTheme(t => ({ ...t, accentColor: e.target.value }))}
                   className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                 />
                 <span 
-                  className="w-3 h-3 rounded-full shrink-0 shadow-sm border border-white/20" 
+                  className="w-8 h-8 rounded-lg shadow-inner transition-transform group-hover:scale-110 border border-black/10" 
                   style={{ 
-                    background: theme.accentColor.startsWith('#') 
+                    backgroundColor: theme.accentColor.startsWith('#') 
                       ? theme.accentColor 
-                      : 'linear-gradient(45deg, #ff0000 0%, #ff7f00 15%, #ffff00 30%, #00ff00 45%, #0000ff 60%, #4b0082 75%, #8b00ff 100%)' 
+                      : (ACCENT_COLOR_MAP[theme.accentColor] || '#6366f1') 
                   }} 
                 />
-                <span className="truncate">{theme.accentColor.startsWith('#') ? 'Custom Color' : 'Add Custom...'}</span>
-                {theme.accentColor.startsWith('#') && <Check className="w-3.5 h-3.5 ml-auto shrink-0" />}
+              </label>
+
+              {/* Input Hex Details */}
+              <div className="flex-1 min-w-0 flex flex-col justify-center">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Custom hex value</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm font-semibold text-muted-foreground/60 select-none">#</span>
+                  <input
+                    type="text"
+                    value={(theme.accentColor.startsWith('#') ? theme.accentColor : (ACCENT_COLOR_MAP[theme.accentColor] || '#6366f1')).replace('#', '')}
+                    onChange={e => {
+                      const val = e.target.value;
+                      const cleanVal = val.replace(/[^a-fA-F0-9]/g, '');
+                      if (cleanVal.length <= 6) {
+                        setTheme(t => ({ ...t, accentColor: `#${cleanVal}` }));
+                      }
+                    }}
+                    className="bg-transparent text-sm font-black text-foreground focus:outline-none w-full tracking-wider font-mono uppercase border-b border-border/80 focus:border-primary/50 py-0.5"
+                    placeholder="FFFFFF"
+                    maxLength={6}
+                  />
+                </div>
+              </div>
+
+              {/* Add Color Action Button */}
+              <label className="flex items-center justify-center gap-2 h-11 px-4 rounded-xl border border-border hover:bg-accent text-xs font-bold transition-all cursor-pointer bg-card hover:border-primary/20 shrink-0 select-none relative">
+                <input
+                  type="color"
+                  value={theme.accentColor.startsWith('#') ? theme.accentColor : (ACCENT_COLOR_MAP[theme.accentColor] || '#6366f1')}
+                  onChange={e => setTheme(t => ({ ...t, accentColor: e.target.value }))}
+                  className="absolute inset-0 opacity-0 cursor-pointer w-0 h-0"
+                />
+                <Palette className="w-4 h-4 text-primary" />
+                <span>Add Color</span>
               </label>
             </div>
-
-            {/* Custom Hex Manual Input field (shows only when custom color is selected) */}
-            {theme.accentColor.startsWith('#') && (
-              <div className="flex items-center gap-3 bg-accent/15 border border-border/50 p-2.5 rounded-xl mt-2 animate-in slide-in-from-top-1.5 duration-200">
-                <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest shrink-0">Hex Value:</span>
-                <input
-                  type="text"
-                  value={theme.accentColor}
-                  onChange={e => {
-                    const val = e.target.value;
-                    if (val.startsWith('#') && val.length <= 7) {
-                      setTheme(t => ({ ...t, accentColor: val }));
-                    } else if (!val.startsWith('#') && val.length <= 6) {
-                      setTheme(t => ({ ...t, accentColor: `#${val}` }));
-                    }
-                  }}
-                  className="bg-transparent text-xs font-bold text-foreground border-b border-border/60 focus:border-primary/50 focus:outline-none flex-1 py-0.5 tracking-wider font-mono uppercase"
-                  placeholder="#HEXCODE"
-                  maxLength={7}
-                />
-                <div 
-                  className="w-5 h-5 rounded-md border border-border/50 shrink-0 shadow-sm" 
-                  style={{ backgroundColor: theme.accentColor }}
-                />
-              </div>
-            )}
           </div>
 
           {/* Font */}
@@ -262,7 +243,7 @@ function PortalThemeModal({ project, onClose }: { project: any; onClose: () => v
             <div className="flex-1 min-w-0">
               <p className={cn('text-xs font-black uppercase tracking-wider truncate', theme.mode === 'dark' ? 'text-slate-100' : 'text-slate-900')}>{project.name}</p>
               <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-wide mt-0.5">
-                {theme.mode === 'dark' ? '🌙 Dark' : '☀️ Light'} • {theme.accentColor.startsWith('#') ? `Custom (${theme.accentColor})` : ACCENT_OPTIONS.find(a => a.value === theme.accentColor)?.label} • {FONT_OPTIONS.find(f => f.value === theme.fontFamily)?.label} • Size: {theme.fontSize || 'base'}
+                {theme.mode === 'dark' ? '🌙 Dark' : '☀️ Light'} • Color: {theme.accentColor.startsWith('#') ? theme.accentColor : (ACCENT_COLOR_MAP[theme.accentColor] || theme.accentColor)} • {FONT_OPTIONS.find(f => f.value === theme.fontFamily)?.label} • Size: {theme.fontSize || 'base'}
               </p>
             </div>
             <div 
@@ -337,7 +318,7 @@ function SectionsModal({ project, onClose }: { project: any; onClose: () => void
         </button>
 
         <div className="space-y-1">
-          <h2 className="text-base font-black text-foreground uppercase tracking-wider font-outfit">Configure Project Sections</h2>
+          <h2 className="text-base font-black text-foreground uppercase tracking-wider font-outfit">Configure Module Sections</h2>
           <p className="text-xs text-muted-foreground font-medium">Add, rename, or delete the custom category tabs inside your workspace.</p>
         </div>
 
@@ -581,10 +562,10 @@ export default function ProjectDetailPage() {
         <div className="w-16 h-16 rounded-2xl bg-accent flex items-center justify-center mb-4">
           <Folder className="w-8 h-8 text-muted-foreground" />
         </div>
-        <h3 className="text-lg font-bold mb-2">Project Not Found</h3>
-        <p className="text-sm text-muted-foreground mb-6">This project may have been deleted.</p>
+        <h3 className="text-lg font-bold mb-2">Module Not Found</h3>
+        <p className="text-sm text-muted-foreground mb-6">This module may have been deleted.</p>
         <Button onClick={() => router.push('/dashboard/projects')}>
-          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Projects
+          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Modules
         </Button>
       </div>
     );

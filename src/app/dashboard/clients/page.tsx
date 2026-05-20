@@ -9,7 +9,7 @@ import {
   X, AlertCircle, Mail, Lock, User2, Briefcase,
   ShieldCheck, RefreshCw, Edit3, ExternalLink, FolderOpen
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, toSlug } from '@/lib/utils';
 import axios from 'axios';
 import { Select } from '@/components/ui/select';
 
@@ -177,7 +177,9 @@ export default function ClientsAdminPage() {
 
   const getPortalUrl = (projectId: string | null) => {
     if (!projectId) return null;
-    return `${typeof window !== 'undefined' ? window.location.origin : ''}/client/${projectId}`;
+    const project = projects.find(p => p.id === projectId);
+    const slugOrId = project ? toSlug(project.name) : projectId;
+    return `${typeof window !== 'undefined' ? window.location.origin : ''}/client/${slugOrId}`;
   };
 
   return (
@@ -452,7 +454,7 @@ export default function ClientsAdminPage() {
                   <div className="min-w-0">
                     <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Client Portal URL</p>
                     <p className="text-[10px] font-bold text-primary truncate">
-                      {`/client/${form.assignedProjectId}`}
+                      {`/client/${toSlug(projects.find(p => p.id === form.assignedProjectId)?.name || form.assignedProjectId)}`}
                     </p>
                   </div>
                 </div>

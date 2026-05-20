@@ -6,6 +6,8 @@ import { useDocumentStore } from '@/store/useDocumentStore';
 import { useProjectStore } from '@/store/useProjectStore';
 import { BookOpen, ArrowRight } from 'lucide-react';
 
+import { toSlug } from '@/lib/utils';
+
 export default function ClientProjectPage() {
   const params = useParams();
   const projectId = params.projectId as string;
@@ -13,13 +15,14 @@ export default function ClientProjectPage() {
   const { documents } = useDocumentStore();
   const { projects } = useProjectStore();
 
-  const project = projects.find(p => p.id === projectId);
-  const projectDocs = documents.filter(d => d.projectId === projectId && d.status === 'published');
+  const project = projects.find(p => p.id === projectId || toSlug(p.name) === projectId);
+  const resolvedProjectId = project?.id || projectId;
+  const projectDocs = documents.filter(d => d.projectId === resolvedProjectId && d.status === 'published');
 
   // Auto-navigate to first doc
   useEffect(() => {
     if (projectDocs.length > 0) {
-      router.replace(`/client/${projectId}/docs/${projectDocs[0].id}`);
+      router.replace(`/client/${projectId}/docs/${toSlug(projectDocs[0].title)}`);
     }
   }, [projectDocs, projectId, router]);
 
@@ -30,7 +33,7 @@ export default function ClientProjectPage() {
           {project?.icon || '📂'}
         </div>
         <div className="space-y-2">
-          <h1 className="text-2xl font-black text-foreground font-outfit uppercase tracking-wider">{project?.name || 'Project'}</h1>
+          <h1 className="text-2xl font-black text-foreground font-outfit uppercase tracking-wider">{project?.name || 'Module'}</h1>
           <p className="text-sm text-muted-foreground font-medium">Loading your documentation…</p>
         </div>
         {projectDocs.length === 0 && (

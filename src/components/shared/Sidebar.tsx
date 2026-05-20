@@ -29,7 +29,7 @@ import {
   Link2,
   AlertCircle
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, toSlug } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -407,7 +407,7 @@ export default function Sidebar() {
                                   setOpenProjectMenuId(openProjectMenuId === project.id ? null : project.id);
                                 }}
                                 className="p-0.5 hover:bg-accent rounded-lg text-muted-foreground hover:text-foreground transition-all opacity-0 group-hover/proj:opacity-100 cursor-pointer"
-                                title="Project settings"
+                                title="Module settings"
                               >
                                 <MoreVertical className="w-3.5 h-3.5" />
                               </button>
@@ -437,7 +437,7 @@ export default function Sidebar() {
                                     </button>
                                     <button
                                       onClick={() => {
-                                        const url = `${window.location.origin}/public/${project.id}`;
+                                        const url = `${window.location.origin}/public/${toSlug(project.name)}`;
                                         navigator.clipboard.writeText(url);
                                         setToastMessage('Public link copied to clipboard!');
                                         setTimeout(() => setToastMessage(''), 3000);

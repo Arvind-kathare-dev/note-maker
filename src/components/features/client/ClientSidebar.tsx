@@ -4,7 +4,7 @@ import React from 'react';
 import { useParams, useRouter, usePathname } from 'next/navigation';
 import { useDocumentStore } from '@/store/useDocumentStore';
 import { useProjectStore, getProjectSections } from '@/store/useProjectStore';
-import { cn } from '@/lib/utils';
+import { cn, toSlug } from '@/lib/utils';
 import { 
   GraduationCap, ShieldAlert, Backpack, Code2, Briefcase, Users2, BookOpen, X,
   ChevronDown, ChevronRight 
@@ -30,19 +30,20 @@ export default function ClientSidebar({ projectId, onClose }: ClientSidebarProps
   const { projects } = useProjectStore();
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
 
-  const project = projects.find(p => p.id === projectId);
+  const project = projects.find(p => p.id === projectId || toSlug(p.name) === projectId);
   const sections = project ? getProjectSections(project) : [];
+  const resolvedProjectId = project?.id || projectId;
   
   // Only published docs for this project
-  const projectDocs = documents.filter(d => d.projectId === projectId && d.status === 'published');
+  const projectDocs = documents.filter(d => d.projectId === resolvedProjectId && d.status === 'published');
 
   const toggleSection = (id: string) => {
     setCollapsedSections(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const navigate = (docId: string) => {
+  const navigate = (doc: any) => {
     const basePath = pathname?.startsWith('/public') ? '/public' : '/client';
-    router.push(`${basePath}/${projectId}/docs/${docId}`);
+    router.push(`${basePath}/${projectId}/docs/${toSlug(doc.title)}`);
     onClose?.();
   };
 
@@ -70,9 +71,9 @@ export default function ClientSidebar({ projectId, onClose }: ClientSidebarProps
       {/* Navigation Tree */}
       <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1 scrollbar-thin">
         
-        {/* Project overview link */}
+        {/* Module overview link */}
         <div className="px-2 mb-3">
-          <p className="text-[9px] font-black text-muted-foreground/60 uppercase tracking-widest">Project Overview</p>
+          <p className="text-[9px] font-black text-muted-foreground/60 uppercase tracking-widest">Module Overview</p>
         </div>
 
         {sections.length === 0 ? (
@@ -82,8 +83,8 @@ export default function ClientSidebar({ projectId, onClose }: ClientSidebarProps
               <DocItem
                 key={doc.id}
                 doc={doc}
-                active={doc.id === activeDocId}
-                onClick={() => navigate(doc.id)}
+                active={doc.id === activeDocId || toSlug(doc.title) === activeDocId}
+                onClick={() => navigate(doc)}
               />
             ))}
           </div>
@@ -126,8 +127,8 @@ export default function ClientSidebar({ projectId, onClose }: ClientSidebarProps
                         <DocItem
                           key={doc.id}
                           doc={doc}
-                          active={doc.id === activeDocId}
-                          onClick={() => navigate(doc.id)}
+                          active={doc.id === activeDocId || toSlug(doc.title) === activeDocId}
+                          onClick={() => navigate(doc)}
                         />
                       ))
                     )}
