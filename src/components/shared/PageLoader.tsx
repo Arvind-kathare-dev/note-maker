@@ -27,12 +27,6 @@ export default function PageLoader({
   const [dots, setDots] = useState(0);
   const [progress, setProgress] = useState(8);
 
-  // Animated ellipsis
-  useEffect(() => {
-    const t = setInterval(() => setDots(d => (d + 1) % 4), 420);
-    return () => clearInterval(t);
-  }, []);
-
   // Fake-progress bar that crawls to ~92 % and waits for real data
   useEffect(() => {
     let raf: number;
@@ -52,6 +46,12 @@ export default function PageLoader({
 
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
+  }, []);
+
+  // Animated ellipsis
+  useEffect(() => {
+    const t = setInterval(() => setDots(d => (d + 1) % 4), 420);
+    return () => clearInterval(t);
   }, []);
 
   const dotsStr = '.'.repeat(dots);
@@ -87,25 +87,30 @@ export default function PageLoader({
 
         {/* Icon ring */}
         <div className="relative flex items-center justify-center">
-          {/* Outer spinning ring */}
-          <div
-            className="absolute w-24 h-24 rounded-full border-2 border-transparent animate-spin"
-            style={{
-              borderTopColor: 'var(--accent-primary)',
-              borderRightColor: 'color-mix(in oklch, var(--accent-primary) 40%, transparent)',
-              animationDuration: '1.1s',
-            }}
-          />
-          {/* Second ring — counter-spin */}
-          <div
-            className="absolute w-18 h-18 rounded-full border border-transparent animate-spin"
-            style={{
-              borderBottomColor: 'var(--accent-primary)',
-              borderLeftColor:   'color-mix(in oklch, var(--accent-primary) 30%, transparent)',
-              animationDuration: '1.7s',
-              animationDirection: 'reverse',
-            }}
-          />
+          {/* Outer spinning ring (Play Store style progress) */}
+          <div className="absolute w-24 h-24 animate-spin" style={{ animationDuration: '2.5s' }}>
+            <svg className="w-full h-full -rotate-90" viewBox="0 0 96 96">
+              {/* Background track (subtle) */}
+              <circle
+                cx="48" cy="48" r={46}
+                fill="transparent"
+                stroke="color-mix(in oklch, var(--accent-primary) 12%, transparent)"
+                strokeWidth="2"
+              />
+              {/* Animated progress ring */}
+              <circle
+                cx="48" cy="48" r={46}
+                fill="transparent"
+                stroke="var(--accent-primary)"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeDasharray={289.026}
+                strokeDashoffset={289.026 - (progress / 100) * 289.026}
+                className="transition-all duration-300 ease-out"
+              />
+            </svg>
+          </div>
+
           {/* Icon badge */}
           <div
             className="relative w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-2xl"
@@ -138,42 +143,7 @@ export default function PageLoader({
           </p>
         </div>
 
-        {/* Progress bar */}
-        <div className="w-full space-y-2">
-          <div
-            className="w-full h-1 rounded-full overflow-hidden"
-            style={{ background: 'color-mix(in oklch, var(--accent-primary) 12%, var(--muted))' }}
-          >
-            <div
-              className="h-full rounded-full transition-all duration-300"
-              style={{
-                width: `${progress}%`,
-                background: 'linear-gradient(90deg, var(--accent-primary), color-mix(in oklch, var(--accent-primary) 70%, white))',
-                boxShadow: '0 0 12px var(--accent-primary)',
-              }}
-            />
-          </div>
-          <p
-            className="text-[9px] font-black uppercase tracking-widest text-right opacity-30"
-          >
-            {Math.round(progress)}%
-          </p>
-        </div>
 
-        {/* Skeleton rows */}
-        <div className="w-full space-y-3">
-          {[80, 60, 72].map((w, i) => (
-            <div
-              key={i}
-              className="h-2.5 rounded-full animate-pulse"
-              style={{
-                width: `${w}%`,
-                background: 'color-mix(in oklch, var(--accent-primary) 10%, var(--muted))',
-                animationDelay: `${i * 0.18}s`,
-              }}
-            />
-          ))}
-        </div>
 
       </div>
 
