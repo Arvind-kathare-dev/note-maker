@@ -1,7 +1,7 @@
 'use client';
 
 import Sidebar from '@/components/shared/Sidebar';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, Menu } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   DropdownMenu, 
@@ -14,11 +14,12 @@ import {
 import { useAuthStore } from '@/store/useAuthStore';
 import { useZenStore } from '@/store/useZenStore';
 import { useThemeStore } from '@/store/useThemeStore';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useProjectStore } from '@/store/useProjectStore';
 import { useDocumentStore } from '@/store/useDocumentStore';
 import { useRouter } from 'next/navigation';
+import PageLoader from '@/components/shared/PageLoader';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, logout, isAuthenticated } = useAuthStore();
@@ -27,6 +28,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { fetchFolders, fetchDocuments } = useDocumentStore();
   const { mode, setMode } = useThemeStore();
   const router = useRouter();
+  const [dataLoaded, setDataLoaded] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
     // Read directly from localStorage to prevent Next.js/Zustand hydration lag redirecting the user
@@ -56,19 +59,41 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         await fetchDocuments();
       } catch (error) {
         console.error('Failed to initialize database stores:', error);
+      } finally {
+        setDataLoaded(true);
       }
     };
 
     initializeDatabaseAndStores();
   }, [isAuthenticated, router]);
 
+  if (!dataLoaded) {
+    return (
+      <PageLoader
+        variant="dashboard"
+        icon="⚡"
+        label="Veloc Docs Portal"
+        hint="Loading your workspace"
+      />
+    );
+  }
+
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
-      {!isZenMode && <Sidebar />}
+      {!isZenMode && <Sidebar mobileOpen={mobileSidebarOpen} onMobileOpenChange={setMobileSidebarOpen} />}
       
       <div className="flex-1 flex flex-col min-w-0">
         {!isZenMode && (
-          <header className="h-16 border-b border-border flex items-center justify-between pl-16 pr-4 lg:px-8 bg-card/50 backdrop-blur-md sticky top-0 z-30">
+          <header className="h-14 border-b border-border flex items-center justify-between px-4 lg:px-8 bg-card/50 backdrop-blur-md sticky top-0 z-30 gap-3">
+            {/* Mobile hamburger */}
+            <button
+              onClick={() => setMobileSidebarOpen(true)}
+              className="lg:hidden w-9 h-9 flex items-center justify-center rounded-xl border border-border bg-card text-foreground hover:bg-accent transition-all cursor-pointer shrink-0"
+              aria-label="Open navigation"
+            >
+              <Menu className="w-4 h-4" />
+            </button>
+
             <div className="flex-1 max-w-xl min-w-0">
               <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground truncate">
                 <span className="truncate">Workspace</span>

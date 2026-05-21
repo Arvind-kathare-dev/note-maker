@@ -89,12 +89,24 @@ export function Select({
     setIsOpen(false);
   };
 
+  const handleToggle = () => {
+    if (!isOpen && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      setCoords({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      });
+    }
+    setIsOpen((prev) => !prev);
+  };
+
   return (
     <div ref={containerRef} className={cn("relative w-full", className)}>
       <button
         type="button"
         disabled={disabled}
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={handleToggle}
         className={cn(
           "w-full h-11 flex items-center justify-between px-3.5 rounded-xl border border-border bg-background hover:bg-accent/40 text-xs font-bold text-foreground transition-all focus:outline-none focus:border-primary/50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer",
           triggerClassName
@@ -124,7 +136,7 @@ export function Select({
             minWidth: '80px',
             zIndex: 9999,
           }}
-          className="mt-1.5 bg-popover border border-border rounded-xl shadow-2xl p-1 max-h-60 overflow-y-auto scrollbar-thin animate-in fade-in slide-in-from-top-1 duration-150"
+          className="mt-1.5 bg-popover border border-border rounded-xl shadow-2xl p-1 max-h-60 overflow-y-auto scrollbar-thin animate-in fade-in duration-100"
         >
           {options.length === 0 ? (
             <div className="py-2.5 px-3 text-xs text-muted-foreground italic text-center">No options available</div>

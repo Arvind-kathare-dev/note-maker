@@ -1,0 +1,197 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+
+interface PageLoaderProps {
+  /** Optional project icon (emoji) to display in the center icon badge */
+  icon?: string;
+  /** Optional project name shown below the icon */
+  label?: string;
+  /** Optional hint line shown below the label */
+  hint?: string;
+  /** Variant controls the overall chrome: 'dashboard' (dark branded) vs 'portal' (theme-aware) */
+  variant?: 'dashboard' | 'portal';
+}
+
+/**
+ * Full-viewport loading screen that inherits CSS custom-property theme colours
+ * (--accent-primary, --background, --foreground) so it looks right in every
+ * portal theme and in both dark / light modes.
+ */
+export default function PageLoader({
+  icon = '⚡',
+  label = 'Veloc Platform',
+  hint = 'Fetching your workspace…',
+  variant = 'dashboard',
+}: PageLoaderProps) {
+  const [dots, setDots] = useState(0);
+  const [progress, setProgress] = useState(8);
+
+  // Animated ellipsis
+  useEffect(() => {
+    const t = setInterval(() => setDots(d => (d + 1) % 4), 420);
+    return () => clearInterval(t);
+  }, []);
+
+  // Fake-progress bar that crawls to ~92 % and waits for real data
+  useEffect(() => {
+    let raf: number;
+    let start: number | null = null;
+
+    const tick = (ts: number) => {
+      if (!start) start = ts;
+      const elapsed = ts - start;
+      // Ease-out curve: fast at first, slows after ~60 %
+      const target = Math.min(92, 8 + (elapsed / 3200) * 84);
+      setProgress(prev => {
+        if (prev < target) return Math.min(target, prev + 0.6);
+        return prev;
+      });
+      raf = requestAnimationFrame(tick);
+    };
+
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const dotsStr = '.'.repeat(dots);
+
+  return (
+    <div
+      className="fixed inset-0 z-9999 flex flex-col items-center justify-center bg-background text-foreground overflow-hidden select-none"
+      aria-busy="true"
+      aria-label="Loading"
+    >
+      {/* ── Ambient glow blobs ───────────────────────────────────── */}
+      <div
+        className="pointer-events-none absolute -top-32 -left-32 w-[520px] h-[520px] rounded-full opacity-20 blur-3xl animate-pulse"
+        style={{ background: 'var(--accent-primary)' }}
+      />
+      <div
+        className="pointer-events-none absolute -bottom-48 -right-48 w-[480px] h-[480px] rounded-full opacity-10 blur-3xl animate-pulse"
+        style={{ background: 'var(--accent-primary)', animationDelay: '1.2s' }}
+      />
+
+      {/* ── Grid overlay (subtle) ────────────────────────────────── */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage:
+            'linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px)',
+          backgroundSize: '40px 40px',
+        }}
+      />
+
+      {/* ── Center card ──────────────────────────────────────────── */}
+      <div className="relative z-10 flex flex-col items-center gap-8 px-6 max-w-sm w-full">
+
+        {/* Icon ring */}
+        <div className="relative flex items-center justify-center">
+          {/* Outer spinning ring */}
+          <div
+            className="absolute w-24 h-24 rounded-full border-2 border-transparent animate-spin"
+            style={{
+              borderTopColor: 'var(--accent-primary)',
+              borderRightColor: 'color-mix(in oklch, var(--accent-primary) 40%, transparent)',
+              animationDuration: '1.1s',
+            }}
+          />
+          {/* Second ring — counter-spin */}
+          <div
+            className="absolute w-18 h-18 rounded-full border border-transparent animate-spin"
+            style={{
+              borderBottomColor: 'var(--accent-primary)',
+              borderLeftColor:   'color-mix(in oklch, var(--accent-primary) 30%, transparent)',
+              animationDuration: '1.7s',
+              animationDirection: 'reverse',
+            }}
+          />
+          {/* Icon badge */}
+          <div
+            className="relative w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-2xl"
+            style={{
+              background: 'color-mix(in oklch, var(--accent-primary) 15%, var(--card))',
+              border: '1.5px solid color-mix(in oklch, var(--accent-primary) 30%, transparent)',
+              boxShadow: '0 0 32px color-mix(in oklch, var(--accent-primary) 25%, transparent)',
+            }}
+          >
+            {icon}
+          </div>
+        </div>
+
+        {/* Branding */}
+        <div className="text-center space-y-1.5">
+          <p
+            className="text-[9px] font-black uppercase tracking-[0.25em] opacity-50"
+          >
+            {variant === 'portal' ? 'Veloc Client Portal' : 'Veloc Platform'}
+          </p>
+          <h1
+            className="text-xl font-black tracking-tight font-outfit uppercase"
+            style={{ color: 'var(--foreground)' }}
+          >
+            {label}
+          </h1>
+          <p className="text-[11px] font-semibold opacity-50">
+            {hint}
+            <span className="inline-block w-6 text-left">{dotsStr}</span>
+          </p>
+        </div>
+
+        {/* Progress bar */}
+        <div className="w-full space-y-2">
+          <div
+            className="w-full h-1 rounded-full overflow-hidden"
+            style={{ background: 'color-mix(in oklch, var(--accent-primary) 12%, var(--muted))' }}
+          >
+            <div
+              className="h-full rounded-full transition-all duration-300"
+              style={{
+                width: `${progress}%`,
+                background: 'linear-gradient(90deg, var(--accent-primary), color-mix(in oklch, var(--accent-primary) 70%, white))',
+                boxShadow: '0 0 12px var(--accent-primary)',
+              }}
+            />
+          </div>
+          <p
+            className="text-[9px] font-black uppercase tracking-widest text-right opacity-30"
+          >
+            {Math.round(progress)}%
+          </p>
+        </div>
+
+        {/* Skeleton rows */}
+        <div className="w-full space-y-3">
+          {[80, 60, 72].map((w, i) => (
+            <div
+              key={i}
+              className="h-2.5 rounded-full animate-pulse"
+              style={{
+                width: `${w}%`,
+                background: 'color-mix(in oklch, var(--accent-primary) 10%, var(--muted))',
+                animationDelay: `${i * 0.18}s`,
+              }}
+            />
+          ))}
+        </div>
+
+      </div>
+
+      {/* ── Bottom wordmark ──────────────────────────────────────── */}
+      <div className="absolute bottom-7 flex items-center gap-1.5 opacity-25">
+        <div
+          className="w-4 h-4 rounded-md flex items-center justify-center text-[8px] font-black"
+          style={{
+            background: 'var(--accent-primary)',
+            color: 'var(--accent-primary-foreground, #fff)',
+          }}
+        >
+          V
+        </div>
+        <span className="text-[9px] font-black uppercase tracking-[0.2em]">
+          Veloc Docs
+        </span>
+      </div>
+    </div>
+  );
+}

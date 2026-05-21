@@ -3,14 +3,14 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
-  X, Plus, Trash2, ChevronDown, GraduationCap, ShieldAlert, 
-  Backpack, Code2, Briefcase, Users2, BookOpen 
+  X, Plus, Trash2
 } from 'lucide-react';
 import { useProjectStore, Project } from '@/store/useProjectStore';
 import { useDocumentStore } from '@/store/useDocumentStore';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
+import { getSectionIconSelectOptions } from '@/lib/sectionIcons';
 
 const CATEGORY_OPTIONS = [
   'School Based', 'Tech Based', 'E-Commerce', 'Real Estate', 
@@ -18,15 +18,6 @@ const CATEGORY_OPTIONS = [
   'Fitness & Gym', 'Landing Page', 'Logistics & Supply', 'Other / Custom'
 ].map(cat => ({ value: cat, label: cat }));
 
-const SECTION_ICON_OPTIONS = [
-  { emoji: 'GraduationCap', label: '🎓' },
-  { emoji: 'ShieldAlert', label: '🛡️' },
-  { emoji: 'Backpack', label: '🎒' },
-  { emoji: 'Code2', label: '💻' },
-  { emoji: 'Briefcase', label: '💼' },
-  { emoji: 'Users2', label: '👥' },
-  { emoji: 'BookOpen', label: '📝' }
-].map(opt => ({ value: opt.emoji, label: opt.label }));
 
 const PROJECT_ICONS = ['🌱', '🚀', '🛒', '⚡', '📦', '🏕️', '🎯', '🔥', '💡', '🛠️', '📊', '🎨', '🔬'];
 
@@ -274,36 +265,35 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
 
             <div className="space-y-2">
               {customSections.map((section, idx) => (
-                <div key={section.id} className="flex items-center gap-3 bg-card border border-border p-3 rounded-2xl hover:border-primary/40 hover:shadow-lg transition-all group/item">
-                  <div className="relative shrink-0">
+                <div key={section.id} className="flex flex-col gap-2.5 bg-card border border-border p-3 rounded-2xl hover:border-primary/40 hover:shadow-lg transition-all group/item">
+                  <div className="relative w-full">
                     <Select
                       value={section.icon}
                       onChange={val => handleUpdateSectionIcon(section.id, val)}
-                      options={SECTION_ICON_OPTIONS}
-                      className="w-18"
-                      triggerClassName="h-9 px-2 rounded-xl"
+                      options={getSectionIconSelectOptions()}
+                      className="w-full"
+                      triggerClassName="h-10 px-3 rounded-xl"
                     />
                   </div>
 
-                  <div className="flex-1 min-w-0">
+                  <div className="flex w-full items-center gap-2">
                     <input
                       type="text"
                       required
                       value={section.label}
                       onChange={e => handleUpdateSectionLabel(section.id, e.target.value)}
                       placeholder={`Section ${idx + 1} name...`}
-                      className="w-full bg-background border border-border hover:border-border/80 focus:border-primary/45 focus:bg-background rounded-xl px-3 py-2 text-xs font-bold text-foreground focus:outline-none transition-all placeholder:text-muted-foreground/45"
+                      className="flex-1 min-w-0 bg-background border border-border hover:border-border/80 focus:border-primary/45 focus:bg-background rounded-xl px-3 h-10 text-xs font-bold text-foreground focus:outline-none transition-all placeholder:text-muted-foreground/45"
                     />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveCustomSection(section.id)}
+                      className="bg-rose-500/10 hover:bg-rose-500/20 rounded-xl text-rose-500 hover:text-rose-600 transition-colors shrink-0 cursor-pointer flex items-center justify-center h-10 w-10"
+                      title="Remove custom section"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveCustomSection(section.id)}
-                    className="p-2 bg-rose-500/5 hover:bg-rose-500/10 rounded-xl text-rose-400 hover:text-rose-300 transition-colors shrink-0 cursor-pointer"
-                    title="Remove custom section"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
                 </div>
               ))}
               {customSections.length === 0 && (

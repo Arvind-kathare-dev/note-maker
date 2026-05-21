@@ -8,7 +8,7 @@ import {
   Trash2, Edit3, BookOpen, Code2, Workflow, Users2, Star, Clock,
   ChevronRight, FolderPlus, StickyNote, X, FileCheck, GraduationCap, Users,
   ShieldAlert, Backpack, Briefcase, ChevronDown, Palette, Sun, Moon, Type, Check, Sliders,
-  Link2, AlertCircle
+  Link2, AlertCircle, Send
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,16 +20,8 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { Select } from '@/components/ui/select';
-
-const SECTION_ICON_OPTIONS = [
-  { emoji: 'GraduationCap', label: '🎓' },
-  { emoji: 'ShieldAlert', label: '🛡️' },
-  { emoji: 'Backpack', label: '🎒' },
-  { emoji: 'Code2', label: '💻' },
-  { emoji: 'Briefcase', label: '💼' },
-  { emoji: 'Users2', label: '👥' },
-  { emoji: 'BookOpen', label: '📝' }
-].map(opt => ({ value: opt.emoji, label: opt.label }));
+import ShareModal from '@/components/shared/ShareModal';
+import { getSectionIconSelectOptions } from '@/lib/sectionIcons';
 
 type Tab = 'docs' | 'recent';
 
@@ -337,36 +329,35 @@ function SectionsModal({ project, onClose }: { project: any; onClose: () => void
 
             <div className="space-y-2">
               {customSections.map((section, idx) => (
-                <div key={section.id} className="flex items-center gap-3 bg-card border border-border p-3 rounded-2xl hover:border-primary/20 hover:shadow-lg transition-all group/item">
-                  <div className="relative shrink-0">
+                <div key={section.id} className="flex flex-col gap-2.5 bg-card border border-border p-3 rounded-2xl hover:border-primary/20 hover:shadow-lg transition-all group/item">
+                  <div className="relative w-full">
                     <Select
                       value={section.icon}
                       onChange={val => handleUpdateSectionIcon(section.id, val)}
-                      options={SECTION_ICON_OPTIONS}
-                      className="w-18"
-                      triggerClassName="h-9 px-2 rounded-xl"
+                      options={getSectionIconSelectOptions()}
+                      className="w-full"
+                      triggerClassName="h-10 px-3 rounded-xl"
                     />
                   </div>
 
-                  <div className="flex-1 min-w-0">
+                  <div className="flex w-full items-center gap-2">
                     <input
                       type="text"
                       required
                       value={section.label}
                       onChange={e => handleUpdateSectionLabel(section.id, e.target.value)}
                       placeholder={`Section ${idx + 1} name...`}
-                      className="w-full bg-background border border-border hover:border-border/85 focus:border-primary/40 focus:bg-background rounded-xl px-3 py-2 text-xs font-bold text-foreground focus:outline-none transition-all placeholder:text-muted-foreground/50"
+                      className="flex-1 min-w-0 bg-background border border-border hover:border-border/85 focus:border-primary/40 focus:bg-background rounded-xl px-3 h-10 text-xs font-bold text-foreground focus:outline-none transition-all placeholder:text-muted-foreground/50"
                     />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveCustomSection(section.id)}
+                      className="bg-rose-500/10 hover:bg-rose-500/20 rounded-xl text-rose-500 hover:text-rose-600 transition-colors shrink-0 cursor-pointer flex items-center justify-center h-10 w-10"
+                      title="Remove custom section"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveCustomSection(section.id)}
-                    className="p-2 bg-rose-500/5 hover:bg-rose-500/10 rounded-xl text-rose-400 hover:text-rose-350 transition-colors shrink-0 cursor-pointer"
-                    title="Remove custom section"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
                 </div>
               ))}
               {customSections.length === 0 && (
@@ -553,6 +544,7 @@ export default function ProjectDetailPage() {
   const [showSectionsModal, setShowSectionsModal] = useState(false);
   const [showThemeModal, setShowThemeModal] = useState(false);
   const [showNewDocDropdown, setShowNewDocDropdown] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
   const project = projects.find(p => p.id === id);
@@ -633,17 +625,12 @@ export default function ProjectDetailPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  const url = `${window.location.origin}/${project.id}`;
-                  navigator.clipboard.writeText(url);
-                  setToastMessage('Public link copied to clipboard!');
-                  setTimeout(() => setToastMessage(''), 3000);
-                }}
+                onClick={() => setShowShareModal(true)}
                 className="gap-1.5 sm:gap-2 border-border/40 hover:bg-accent font-semibold px-2.5 sm:px-3"
-                title="Public Link"
+                title="Share Module"
               >
-                <Link2 className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Public Link</span>
+                <Send className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Share</span>
               </Button>
               <Button
                 variant="outline"
@@ -957,6 +944,9 @@ export default function ProjectDetailPage() {
       )}
       {showThemeModal && (
         <PortalThemeModal project={project} onClose={() => setShowThemeModal(false)} />
+      )}
+      {showShareModal && (
+        <ShareModal project={project} onClose={() => setShowShareModal(false)} />
       )}
 
       {/* Toast Alert */}

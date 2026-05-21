@@ -9,6 +9,7 @@ import ClientSidebar from '@/components/features/client/ClientSidebar';
 import { LogOut, Menu, X, Sun, Moon } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn, toSlug } from '@/lib/utils';
+import PageLoader from '@/components/shared/PageLoader';
 
 export default function ClientPortalLayout({ children }: { children: React.ReactNode }) {
   const params = useParams();
@@ -132,7 +133,17 @@ export default function ClientPortalLayout({ children }: { children: React.React
   const projectDefaultMode = project?.portalTheme?.mode || 'dark';
   const isDarkMode = clientMode ? clientMode === 'dark' : projectDefaultMode === 'dark';
 
-
+  // Show a themed loading screen until data is ready
+  if (!loaded) {
+    return (
+      <PageLoader
+        variant="portal"
+        icon={project?.icon || '📒'}
+        label={project?.name || 'Loading Module…'}
+        hint="Preparing your portal"
+      />
+    );
+  }
 
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">

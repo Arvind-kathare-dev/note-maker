@@ -28,7 +28,7 @@ import {
   X,
   Link2,
   AlertCircle,
-  Menu
+  Send
 } from 'lucide-react';
 import { cn, toSlug } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -38,21 +38,19 @@ import { useProjectStore, getProjectSections } from '@/store/useProjectStore';
 import { useDocumentStore, Doc } from '@/store/useDocumentStore';
 import SettingsModal from './SettingsModal';
 import ProjectModal from './ProjectModal';
+import ShareModal from './ShareModal';
 import { Select } from '@/components/ui/select';
-
-const SECTION_ICON_OPTIONS = [
-  { emoji: 'GraduationCap', label: '🎓' },
-  { emoji: 'ShieldAlert', label: '🛡️' },
-  { emoji: 'Backpack', label: '🎒' },
-  { emoji: 'Code2', label: '💻' },
-  { emoji: 'Briefcase', label: '💼' },
-  { emoji: 'Users2', label: '👥' },
-  { emoji: 'BookOpen', label: '📝' }
-].map(opt => ({ value: opt.emoji, label: opt.label }));
+import { getSectionIconSelectOptions, getSectionEmoji } from '@/lib/sectionIcons';
 
 type ClientRole = string;
 
-export default function Sidebar() {
+export default function Sidebar({
+  mobileOpen = false,
+  onMobileOpenChange,
+}: {
+  mobileOpen?: boolean;
+  onMobileOpenChange?: (open: boolean) => void;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const { logout, user } = useAuthStore();
@@ -64,7 +62,13 @@ export default function Sidebar() {
   } = useDocumentStore();
 
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  // isMobileOpen is now controlled externally via props; local state used as fallback
+  const [isMobileOpenLocal, setIsMobileOpenLocal] = useState(false);
+  const isMobileOpen = mobileOpen;
+  const setIsMobileOpen = (val: boolean) => {
+    setIsMobileOpenLocal(val);
+    onMobileOpenChange?.(val);
+  };
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -72,6 +76,7 @@ export default function Sidebar() {
   const [renamingProjectId, setRenamingProjectId] = useState<string | null>(null);
   const [renameProjectVal, setRenameProjectVal] = useState('');
   const [openProjectMenuId, setOpenProjectMenuId] = useState<string | null>(null);
+  const [shareProject, setShareProject] = useState<any>(null);
 
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
   const [renameFolderVal, setRenameFolderVal] = useState('');
@@ -242,50 +247,50 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Mobile hamburger button - visible only on small screens */}
-      <button
-        onClick={() => setIsMobileOpen(true)}
-        className="fixed top-4 left-4 z-50 lg:hidden flex items-center justify-center w-10 h-10 rounded-xl bg-card border border-border shadow-lg text-foreground hover:bg-accent transition-all cursor-pointer"
-        aria-label="Open navigation"
-      >
-        <Menu className="w-5 h-5" />
-      </button>
 
       {/* Mobile overlay backdrop */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs lg:hidden"
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
 
-      {/* Sidebar — desktop: always visible; mobile: slide-over drawer */}
+      {/* Sidebar — single unified component: drawer on mobile, static on desktop */}
       <div
         className={cn(
-          "h-screen border-r border-sidebar-border bg-sidebar flex flex-col z-50 text-sidebar-foreground select-none transition-all duration-300",
-          // Desktop behaviour
-          isMobileOpen ? "fixed inset-y-0 left-0 flex shadow-2xl" : "hidden lg:flex",
-          isCollapsed && !isMobileOpen ? "w-20" : "w-76"
+          "fixed lg:static inset-y-0 left-0 z-50 h-screen border-r border-sidebar-border bg-sidebar flex flex-col text-sidebar-foreground select-none transition-transform duration-300 ease-in-out shadow-2xl lg:shadow-none",
+          // Mobile: slide in/out; Desktop: always visible
+          isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+          isCollapsed && !isMobileOpen ? "w-20" : "w-72"
         )}
       >
         {/* Veloc Branding Header */}
-        <div className="p-5 flex flex-col shrink-0 gap-3 border-b border-border/20">
+        <div className="p-4 flex flex-col shrink-0 gap-3 border-b border-border/20">
           {!isCollapsed ? (
             <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-accent border border-border w-full relative">
-              <div className="w-9 h-9 bg-primary text-primary-foreground rounded-lg flex items-center justify-center shadow-lg shadow-primary/20 shrink-0 font-outfit font-black text-lg">
+              <div className="w-8 h-8 bg-primary text-primary-foreground rounded-lg flex items-center justify-center shadow-lg shadow-primary/20 shrink-0 font-outfit font-black text-base">
                 V
               </div>
-              <div className="flex flex-col min-w-0 text-left">
+              <div className="flex flex-col min-w-0 text-left flex-1">
                 <span className="font-extrabold text-sm text-foreground font-outfit tracking-wider uppercase">Veloc</span>
                 <span className="text-[9px] text-primary font-black uppercase tracking-widest leading-none mt-0.5">Docs Portal</span>
               </div>
-              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              <div className="flex items-center gap-2 shrink-0">
                 <span className={cn(
                   "text-[8px] font-black uppercase px-1.5 py-0.5 rounded-sm tracking-wide",
                   isAdmin ? "bg-primary/10 text-primary border border-primary/20" : "bg-accent text-muted-foreground"
                 )}>
                   {isAdmin ? 'Admin' : 'Client'}
                 </span>
+                {/* Close button — visible only on mobile */}
+                <button
+                  onClick={() => setIsMobileOpen(false)}
+                  className="lg:hidden p-1 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+                  aria-label="Close navigation"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
             </div>
           ) : (
@@ -300,7 +305,7 @@ export default function Sidebar() {
 
           {/* Dashboard Link */}
           <div className="space-y-1">
-            <Link href="/dashboard">
+            <Link href="/dashboard" onClick={() => setIsMobileOpen(false)}>
               <div className={cn(
                 "flex items-center gap-3 px-3 py-2 rounded-lg transition-all group cursor-pointer text-xs font-bold uppercase tracking-wider",
                 pathname === '/dashboard' ? "bg-primary/10 text-primary font-extrabold" : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
@@ -359,6 +364,7 @@ export default function Sidebar() {
                           setActiveProject(project.id);
                           router.push(`/dashboard/projects/${project.id}`);
                         }
+                        setIsMobileOpen(false);
                       }}
                       className={cn(
                         "group/proj w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg transition-all text-left font-bold text-xs cursor-pointer relative",
@@ -451,15 +457,12 @@ export default function Sidebar() {
                                     </button>
                                     <button
                                       onClick={() => {
-                                        const url = `${window.location.origin}/${toSlug(project.name)}`;
-                                        navigator.clipboard.writeText(url);
-                                        setToastMessage('Public link copied to clipboard!');
-                                        setTimeout(() => setToastMessage(''), 3000);
+                                        setShareProject(project);
                                         setOpenProjectMenuId(null);
                                       }}
                                       className="flex items-center gap-2 w-full text-left px-3 py-2 text-[10.5px] font-bold hover:bg-accent text-foreground transition-all cursor-pointer mt-1"
                                     >
-                                      <Link2 className="w-3.5 h-3.5" /> Copy Public Link
+                                      <Send className="w-3.5 h-3.5 text-primary" /> Share Module
                                     </button>
                                     <div className="border-t border-border mt-1 pt-1">
                                       <button
@@ -801,114 +804,6 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* Mobile slide-over sidebar — shown only on small screens */}
-      <div
-        className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col w-[280px] max-w-[85vw] bg-sidebar border-r border-sidebar-border text-sidebar-foreground select-none transition-transform duration-300 md:hidden",
-          isMobileOpen ? "translate-x-0" : "-translate-x-full"
-        )}
-      >
-        {/* Mobile header with close button */}
-        <div className="p-4 flex items-center justify-between border-b border-border/20 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-primary text-primary-foreground rounded-lg flex items-center justify-center font-outfit font-black text-base">
-              V
-            </div>
-            <div>
-              <p className="font-extrabold text-sm text-foreground font-outfit tracking-wider uppercase">Veloc</p>
-              <p className="text-[9px] text-primary font-black uppercase tracking-widest leading-none">Docs Portal</p>
-            </div>
-          </div>
-          <button
-            onClick={() => setIsMobileOpen(false)}
-            className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-all cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Mobile nav — reuse same structure as desktop */}
-        <div className="flex-1 overflow-y-auto py-4 px-3 space-y-5 scrollbar-thin">
-          <div className="space-y-1">
-            <Link href="/dashboard" onClick={() => setIsMobileOpen(false)}>
-              <div className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all cursor-pointer text-xs font-bold uppercase tracking-wider",
-                pathname === '/dashboard' ? "bg-primary/10 text-primary font-extrabold" : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-              )}>
-                <LayoutDashboard className="w-4 h-4 shrink-0" />
-                <span>Dashboard</span>
-              </div>
-            </Link>
-          </div>
-
-          {/* Projects list for mobile */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between px-3 mb-1">
-              <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Module Directories</p>
-              {isAdmin && (
-                <button
-                  onClick={() => { setIsCreateProjectOpen(true); setIsMobileOpen(false); }}
-                  className="p-0.5 hover:bg-accent rounded text-primary transition-all cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-            <div className="space-y-2">
-              {allowedProjects.map(project => (
-                <button
-                  key={project.id}
-                  onClick={() => {
-                    setActiveProject(project.id);
-                    router.push(`/dashboard/projects/${project.id}`);
-                    setIsMobileOpen(false);
-                  }}
-                  className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all text-left cursor-pointer",
-                    activeProjectId === project.id
-                      ? "bg-accent/40 border-primary/20 text-primary"
-                      : "border-transparent hover:bg-accent/30 text-muted-foreground"
-                  )}
-                >
-                  <span className="text-base shrink-0">{project.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold truncate">{project.name}</p>
-                    <p className="text-[9px] text-primary font-extrabold truncate">{project.category || 'School Based'}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile footer */}
-        <div className="p-3 border-t border-border bg-background shrink-0">
-          {user ? (
-            <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent group relative cursor-pointer">
-              <Avatar className="w-8 h-8 border border-border shadow-sm">
-                <AvatarImage src={user?.avatar} />
-                <AvatarFallback className="bg-primary/20 text-primary text-[10px] font-bold">{user?.name?.charAt(0) || 'U'}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <p className="text-[11px] font-bold truncate text-foreground leading-none">{user?.name}</p>
-                <p className="text-[8px] text-muted-foreground truncate uppercase font-black tracking-widest mt-1">
-                  {isAdmin ? 'Veloc Admin' : 'Client Reader'}
-                </p>
-              </div>
-              <div className="opacity-0 group-hover:opacity-100 transition-opacity" onClick={logout}>
-                <LogOut className="w-3.5 h-3.5 text-rose-500 cursor-pointer" />
-              </div>
-            </div>
-          ) : (
-            <Button
-              onClick={() => { router.push('/login'); setIsMobileOpen(false); }}
-              className="w-full bg-primary hover:bg-primary/95 text-primary-foreground font-black text-[10px] uppercase tracking-wider rounded-xl h-9 cursor-pointer"
-            >
-              <Lock className="w-3.5 h-3.5 shrink-0 mr-2" /> Admin Sign In
-            </Button>
-          )}
-        </div>
-      </div>
 
       <SettingsModal
         isOpen={isSettingsOpen}
@@ -919,6 +814,14 @@ export default function Sidebar() {
       {isCreateProjectOpen && (
         <ProjectModal
           onClose={() => setIsCreateProjectOpen(false)}
+        />
+      )}
+
+      {/* Share Module Modal */}
+      {shareProject && (
+        <ShareModal
+          project={shareProject}
+          onClose={() => setShareProject(null)}
         />
       )}
 
@@ -957,36 +860,35 @@ export default function Sidebar() {
 
                 <div className="space-y-2">
                   {configCustomSections.map((section, idx) => (
-                    <div key={section.id} className="flex items-center gap-3 bg-card border border-border p-3 rounded-2xl hover:border-primary/45 hover:shadow-lg transition-all group/item">
-                      <div className="relative shrink-0">
+                    <div key={section.id} className="flex flex-col gap-2.5 bg-card border border-border p-3 rounded-2xl hover:border-primary/45 hover:shadow-lg transition-all group/item">
+                      <div className="relative w-full">
                         <Select
                           value={section.icon}
                           onChange={val => handleUpdateConfigSectionIcon(section.id, val)}
-                          options={SECTION_ICON_OPTIONS}
-                          className="w-18"
-                          triggerClassName="h-9 px-2 rounded-xl"
+                          options={getSectionIconSelectOptions()}
+                          className="w-full"
+                          triggerClassName="h-10 px-3 rounded-xl"
                         />
                       </div>
 
-                      <div className="flex-1 min-w-0">
+                      <div className="flex w-full items-center gap-2">
                         <input
                           type="text"
                           required
                           value={section.label}
                           onChange={e => handleUpdateConfigSectionLabel(section.id, e.target.value)}
                           placeholder={`Section ${idx + 1} name...`}
-                          className="w-full bg-background border border-border hover:border-border/80 focus:border-primary/40 focus:bg-background rounded-xl px-3 py-2 text-xs font-bold text-foreground focus:outline-none transition-all placeholder:text-muted-foreground/45"
+                          className="flex-1 min-w-0 bg-background border border-border hover:border-border/80 focus:border-primary/40 focus:bg-background rounded-xl px-3 h-10 text-xs font-bold text-foreground focus:outline-none transition-all placeholder:text-muted-foreground/45"
                         />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveConfigCustomSection(section.id)}
+                          className="bg-rose-500/10 hover:bg-rose-500/20 rounded-xl text-rose-500 hover:text-rose-600 transition-colors shrink-0 cursor-pointer flex items-center justify-center h-10 w-10"
+                          title="Remove custom section"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
-
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveConfigCustomSection(section.id)}
-                        className="p-2 bg-rose-500/5 hover:bg-rose-500/10 rounded-xl text-rose-400 hover:text-rose-300 transition-colors shrink-0 cursor-pointer"
-                        title="Remove custom section"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
                     </div>
                   ))}
                   {configCustomSections.length === 0 && (
@@ -1068,7 +970,7 @@ export default function Sidebar() {
                   <Select
                     value={editingSection.icon}
                     onChange={val => setEditingSection(prev => prev ? { ...prev, icon: val } : null)}
-                    options={SECTION_ICON_OPTIONS}
+                    options={getSectionIconSelectOptions()}
                     className="w-full"
                     triggerClassName="h-10 px-3 rounded-xl text-xs font-bold bg-background border border-border"
                   />
