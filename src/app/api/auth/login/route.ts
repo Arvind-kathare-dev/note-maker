@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
       normalized.includes('admin') ||
       normalized === 'john@example.com' ||
       normalized === 'jane@example.com' ||
-      normalized === 'admin@veloc.com' ||
+      normalized === 'admin@littleseeds.com' ||
       normalized === 'admin@example.com';
 
     // Find or auto-create admin user for known admin emails

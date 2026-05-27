@@ -72,7 +72,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <PageLoader
         variant="dashboard"
         icon="⚡"
-        label="Veloc Docs Portal"
+        label="Little Seeds Docs Portal"
         hint="Loading your workspace"
       />
     );

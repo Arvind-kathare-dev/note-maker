@@ -143,7 +143,7 @@ export default function ClientSidebar({ projectId, onClose }: ClientSidebarProps
       {/* Footer: Version info */}
       <div className="px-5 py-3 border-t border-border/20 shrink-0">
         <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50 text-center">
-          {project?.name} · Powered by Veloc
+          {project?.name} · Powered by Little Seeds
         </p>
       </div>
     </div>

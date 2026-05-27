@@ -18,7 +18,7 @@ import TipTapEditor from '@/components/features/editor/TipTapEditor';
 
 import '@/components/features/editor/editor.css';
 import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { cn, toSlug } from '@/lib/utils';
 
 const STATUS_OPTIONS: Array<{ value: 'draft' | 'published' | 'archived'; label: string; color: string }> = [
   { value: 'draft',     label: 'Draft',     color: 'text-amber-500 bg-amber-500/10' },
@@ -199,9 +199,10 @@ interface TableOfContentHeading {
 }
 
 export default function DocumentPage() {
-  const { id } = useParams() as { id: string };
+  const { slug } = useParams() as { slug: string[] };
   const router = useRouter();
   const { documents, updateDocument, setActiveDoc } = useDocumentStore();
+  const { projects } = useProjectStore();
   const { user } = useAuthStore();
   
   const [saving, setSaving] = useState(false);
@@ -212,8 +213,24 @@ export default function DocumentPage() {
   const [tocHeadings, setTocHeadings] = useState<TableOfContentHeading[]>([]);
   const [activeHeadingId, setActiveHeadingId] = useState<string>('');
 
-  const doc = documents.find(d => d.id === id);
-  const { projects } = useProjectStore();
+  const sectionSlug = slug?.length > 1 ? decodeURIComponent(slug[0]) : null;
+  const docSlug = slug?.length > 1 ? decodeURIComponent(slug[1]) : (slug ? decodeURIComponent(slug[0]) : '');
+
+  const doc = documents.find(d => {
+    // If it perfectly matches by ID, then they used the old link format, handle gracefully
+    if (d.id === docSlug) return true;
+    
+    // Otherwise look up by slug
+    if (toSlug(d.title) !== docSlug) return false;
+    if (sectionSlug) {
+      const p = projects.find(proj => proj.id === d.projectId);
+      if (!p) return false;
+      const sectionLabel = p.sections?.find(s => s.id === d.category)?.label || d.category;
+      return toSlug(sectionLabel) === sectionSlug;
+    }
+    return true;
+  });
+
   const project = projects.find(p => p.id === doc?.projectId);
   const sections = project?.sections || [];
 
@@ -397,21 +414,7 @@ export default function DocumentPage() {
   return (
     <div className="flex-1 w-full bg-background flex flex-col min-h-full font-inter text-foreground">
       
-      {/* Guest Mode Alert Banner */}
-      {!user && (
-        <div className="bg-amber-500/5 border-b border-amber-500/10 px-6 py-2.5 flex items-center justify-between text-[11px] text-amber-500 font-bold select-none shrink-0">
-          <div className="flex items-center gap-2">
-            <Compass className="w-4 h-4 text-amber-500" />
-            <span>GUEST ACCESS: You are viewing this manual in read-only mode. Sign in as admin to create, edit, or delete documents.</span>
-          </div>
-          <Button 
-            onClick={() => router.push('/login')}
-            className="h-7 px-3 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/25 text-amber-500 font-black rounded-lg text-[9px] uppercase tracking-wider transition-all cursor-pointer"
-          >
-            Admin Sign In
-          </Button>
-        </div>
-      )}
+      {/* Guest Mode Alert Banner Removed for public users */}
 
       {/* Navigation Header */}
       <header className="min-h-14 h-auto py-2.5 sm:py-0 sm:h-14 border-b border-border bg-card/90 backdrop-blur-xl sticky top-0 z-40 px-3 sm:px-4 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5">
@@ -436,30 +439,12 @@ export default function DocumentPage() {
             />
           </div>
  
-          {/* Quick Info pill */}
-          <div className="hidden lg:flex items-center gap-2 shrink-0 ml-4">
-            <span className={cn('text-[9px] font-black uppercase px-2 py-0.5 rounded-md tracking-wider leading-none', statusMeta.color)}>
-              {statusMeta.label}
-            </span>
-            <span className="text-[10px] text-muted-foreground font-bold flex items-center gap-1">
-              <ClockIcon className="w-3 h-3 text-muted-foreground/75" />
-              {Math.ceil(doc.wordCount / 200) || 1} min read
-            </span>
-            {doc.tags.slice(0, 2).map(tag => (
-              <Badge key={tag} className="text-[9px] uppercase px-1.5 py-0 h-4 bg-accent border border-border text-muted-foreground font-bold">#{tag}</Badge>
-            ))}
-          </div>
         </div>
  
         {/* Right Side: Action Panel */}
         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 shrink-0 justify-end w-full sm:w-auto">
           
-          {/* Reader Access Verification Badge */}
-          {isReadOnly && (
-            <div className="hidden md:flex items-center gap-1 bg-primary/10 border border-primary/20 px-2.5 py-1 rounded-xl text-[10px] font-bold text-primary select-none">
-              <ShieldCheck className="w-3.5 h-3.5" /> {user ? 'Client View Access' : 'Guest View Access'}
-            </div>
-          )}
+          {/* Reader Access Verification Badge Removed for public users */}
  
           {/* Editor Mode Tabs (Edit / Markdown / Preview) - Only visible to writers (Admins) */}
           {!isReadOnly && (
@@ -518,16 +503,6 @@ export default function DocumentPage() {
             </Button>
           )}
  
-          {/* Download PDF */}
-          <Button
-            variant="outline" size="sm"
-            onClick={handleDownloadPDF}
-            className="h-8 rounded-xl gap-1 sm:gap-1.5 px-2.5 sm:px-3 text-[10px] font-bold uppercase tracking-wider bg-accent border-border hover:bg-accent/80 text-foreground hover:text-foreground transition-colors"
-          >
-            <Printer className="w-3.5 h-3.5 text-muted-foreground" />
-            <span className="hidden sm:inline">Download PDF</span>
-          </Button>
- 
           {/* Save button (Only shown to writers) */}
           {!isReadOnly && (
             <Button
@@ -570,16 +545,7 @@ export default function DocumentPage() {
         <div className="flex-1 overflow-y-auto relative w-full scrollbar-thin">
           <div className="max-w-4xl mx-auto py-6 sm:py-12 px-4 sm:px-12 lg:px-16 space-y-8">
             
-            {/* Read-Only Top Page Banner */}
-            {isReadOnly && (
-              <div className="p-4 bg-card border border-border rounded-2xl flex items-start gap-3 text-xs text-muted-foreground select-none">
-                <Compass className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-bold text-foreground">Systematic Flow Guidelines</p>
-                  <p className="mt-0.5 leading-relaxed">You are viewing the official client flow manual for <span className="font-bold text-foreground">{doc.title}</span>. Content is restricted to read-only access based on your simulated client profile.</p>
-                </div>
-              </div>
-            )}
+            {/* Read-Only Top Page Banner Removed for public users */}
  
             {/* Document Core Content */}
             <div id="document-content-area" className={cn(

@@ -57,7 +57,7 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen flex bg-[#030712] font-inter text-slate-300">
       
-      {/* Left panel (Veloc Branding & Value Pillars) */}
+      {/* Left panel (Little Seeds Branding & Value Pillars) */}
       <div className="hidden lg:flex lg:w-1/2 xl:w-[50%] relative flex-col items-center justify-center p-16 overflow-hidden border-r border-border/20">
         <div className="absolute inset-0 bg-linear-to-br from-emerald-950/20 via-[#030712] to-[#030712]" />
         <div className="absolute top-[-15%] left-[-15%] w-[55%] h-[55%] bg-emerald-500/10 rounded-full blur-[100px]" />
@@ -71,7 +71,7 @@ export default function RegisterPage() {
 
           <div className="space-y-2">
             <h1 className="text-3xl font-extrabold tracking-wider text-slate-100 font-outfit uppercase">
-              Join Veloc
+              Join Little Seeds
             </h1>
             <p className="text-slate-400 text-xs font-bold leading-relaxed max-w-xs mx-auto">
               Create a free credentials account to read authorized folders or author manual workspaces.
@@ -94,7 +94,7 @@ export default function RegisterPage() {
             ))}
           </div>
 
-          <p className="text-[9px] font-black uppercase tracking-widest text-slate-600">Veloc Portal Workspace v1.4</p>
+          <p className="text-[9px] font-black uppercase tracking-widest text-slate-600">Little Seeds Portal Workspace v1.4</p>
         </div>
       </div>
 
@@ -144,7 +144,7 @@ export default function RegisterPage() {
                   onChange={e => setEmail(e.target.value)}
                   onFocus={() => setFocused('email')}
                   onBlur={() => setFocused(null)}
-                  placeholder="name@veloc.com"
+                  placeholder="name@littleseeds.com"
                   className="flex-1 bg-transparent text-xs font-bold outline-none placeholder:text-slate-600 text-slate-100"
                   required
                 />

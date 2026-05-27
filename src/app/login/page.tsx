@@ -74,15 +74,15 @@ export default function LoginPage() {
         setActiveProject('p1');
         const firstDoc = documents.find(d => d.projectId === 'p1' && d.category === 'teacher');
         if (firstDoc) setActiveDoc(firstDoc.id);
-      } else if (normalized.includes('teacher') || normalized === 'jenkins@veloc.com') {
+      } else if (normalized.includes('teacher') || normalized === 'jenkins@littleseeds.com') {
         setActiveProject('p1');
         const firstDoc = documents.find(d => d.projectId === 'p1' && d.category === 'teacher');
         if (firstDoc) setActiveDoc(firstDoc.id);
-      } else if (normalized.includes('parent') || normalized.includes('student') || normalized === 'davis@veloc.com') {
+      } else if (normalized.includes('parent') || normalized.includes('student') || normalized === 'davis@littleseeds.com') {
         setActiveProject('p1');
         const firstDoc = documents.find(d => d.projectId === 'p1' && d.category === 'student');
         if (firstDoc) setActiveDoc(firstDoc.id);
-      } else if (normalized.includes('merchant') || normalized === 'marco@veloc.com') {
+      } else if (normalized.includes('merchant') || normalized === 'marco@littleseeds.com') {
         setActiveProject('p3');
         const firstDoc = documents.find(d => d.projectId === 'p3' && (d.category === 'teacher' || d.category === 'admin'));
         if (firstDoc) setActiveDoc(firstDoc.id);
@@ -105,7 +105,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex bg-[#030712] font-inter text-slate-300">
       
-      {/* Left panel (Veloc Branding & Value Pillars) */}
+      {/* Left panel (Little Seeds Branding & Value Pillars) */}
       <div className="hidden lg:flex lg:w-1/2 xl:w-[50%] relative flex-col items-center justify-center p-16 overflow-hidden border-r border-border/20">
         <div className="absolute inset-0 bg-linear-to-br from-emerald-950/20 via-[#030712] to-[#030712]" />
         <div className="absolute top-[-15%] left-[-15%] w-[55%] h-[55%] bg-emerald-500/10 rounded-full blur-[100px]" />
@@ -119,7 +119,7 @@ export default function LoginPage() {
 
           <div className="space-y-2">
             <h1 className="text-3xl font-extrabold tracking-wider text-slate-100 font-outfit uppercase">
-              Veloc Portal
+              Little Seeds Portal
             </h1>
             <p className="text-slate-400 text-xs font-bold leading-relaxed max-w-xs mx-auto">
               Systematic project documentation manuals for developers, admin teams, and client viewers.
@@ -129,7 +129,7 @@ export default function LoginPage() {
           {/* Quick Pillars */}
           <div className="grid grid-cols-1 gap-3 text-left">
             {[
-              { emoji: '🔑', title: 'Admin Documentation Manager', desc: 'Log in as Veloc Admin to easily create, edit, rename or delete document structures.' },
+              { emoji: '🔑', title: 'Admin Documentation Manager', desc: 'Log in as Little Seeds Admin to easily create, edit, rename or delete document structures.' },
               { emoji: '📖', title: 'Client Project Portal', desc: 'Clients get dedicated access to their project docs with a clean, focused reading experience.' },
             ].map(f => (
               <div key={f.title} className="flex items-start gap-4 p-4 rounded-2xl bg-[#0b1220]/60 border border-border/30 backdrop-blur-xs">
@@ -142,7 +142,7 @@ export default function LoginPage() {
             ))}
           </div>
 
-          <p className="text-[9px] font-black uppercase tracking-widest text-slate-600">Veloc Portal Workspace v1.4</p>
+          <p className="text-[9px] font-black uppercase tracking-widest text-slate-600">Little Seeds Portal Workspace v1.4</p>
         </div>
       </div>
 
@@ -172,7 +172,7 @@ export default function LoginPage() {
                   onChange={e => setEmail(e.target.value)}
                   onFocus={() => setFocused('email')}
                   onBlur={() => setFocused(null)}
-                  placeholder="name@veloc.com"
+                  placeholder="name@littleseeds.com"
                   className="flex-1 bg-transparent text-xs font-bold outline-none placeholder:text-slate-600 text-slate-100"
                   required
                 />

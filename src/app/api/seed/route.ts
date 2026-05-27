@@ -55,7 +55,7 @@ const EDITOR_SHOWCASE = JSON.stringify({
   type: 'doc',
   content: [
     { type: 'heading', attrs: { level: 1 }, content: [{ type: 'text', text: '🎨 Advanced Editor Features Showcase' }] },
-    { type: 'paragraph', content: [{ type: 'text', text: 'Welcome to the Veloc advanced document designer! This page serves as a live demonstration of all high-fidelity editing modules integrated into the platform.' }] },
+    { type: 'paragraph', content: [{ type: 'text', text: 'Welcome to the Little Seeds advanced document designer! This page serves as a live demonstration of all high-fidelity editing modules integrated into the platform.' }] },
     { type: 'horizontalRule' },
     { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: '✨ Typography & Colors' }] },
     { type: 'paragraph', content: [
@@ -164,7 +164,7 @@ export async function GET() {
     if (docsCount === 0) {
       await Document.create([
         { id: 'd_teacher_1', folderId: 'f_teacher_p1', parentId: null, projectId: 'p1', title: 'Classroom Layout & Setup Guidelines', content: TEACHER_LAYOUT, category: 'teacher', emoji: '🏫', tags: ['setup', 'classroom'], status: 'published', isPinned: true, isFavorite: false, wordCount: 145, authorName: 'Principal Seeds', authorAvatar: 'https://i.pravatar.cc/150?u=1', version: 1 },
-        { id: 'd_teacher_2', folderId: 'f_teacher_p1', parentId: null, projectId: 'p1', title: 'Advanced Editor Features Showcase', content: EDITOR_SHOWCASE, category: 'teacher', emoji: '🎨', tags: ['showcase', 'editor'], status: 'published', isPinned: true, isFavorite: true, wordCount: 380, authorName: 'Veloc Support', authorAvatar: 'https://i.pravatar.cc/150?u=1', version: 1 },
+        { id: 'd_teacher_2', folderId: 'f_teacher_p1', parentId: null, projectId: 'p1', title: 'Advanced Editor Features Showcase', content: EDITOR_SHOWCASE, category: 'teacher', emoji: '🎨', tags: ['showcase', 'editor'], status: 'published', isPinned: true, isFavorite: true, wordCount: 380, authorName: 'Little Seeds Support', authorAvatar: 'https://i.pravatar.cc/150?u=1', version: 1 },
         { id: 'd_admin_1', folderId: 'f_admin_p1', parentId: null, projectId: 'p1', title: 'Admin Portal Setup Guide', content: ADMIN_PORTAL, category: 'admin', emoji: '🔑', tags: ['admin', 'portal'], status: 'published', isPinned: true, isFavorite: true, wordCount: 88, authorName: 'Support Team', authorAvatar: 'https://i.pravatar.cc/150?u=2', version: 1 },
         { id: 'd_dev_1', folderId: 'f_dev_p1', parentId: null, projectId: 'p1', title: 'Core API Specifications', content: DEV_API, category: 'developer', emoji: '🔌', tags: ['api', 'developer'], status: 'published', isPinned: false, isFavorite: false, wordCount: 52, authorName: 'Lead Dev', authorAvatar: 'https://i.pravatar.cc/150?u=3', version: 2 },
         { id: 'd_student_1', folderId: 'f_student_p1', parentId: null, projectId: 'p1', title: 'Assignment Submission Guide', content: STUDENT_GUIDE, category: 'student', emoji: '🎒', tags: ['homework', 'student'], status: 'published', isPinned: false, isFavorite: true, wordCount: 78, authorName: 'Teacher Maple', authorAvatar: 'https://i.pravatar.cc/150?u=4', version: 1 },

@@ -154,7 +154,7 @@ export default function Sidebar({
     setSelectedProjectForConfig(null);
   };
 
-  // 1. Detect if logged in user is Veloc Admin (Full edit rights)
+  // 1. Detect if logged in user is Little Seeds Admin (Full edit rights)
   const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN' || user?.role === 'admin';
 
   // 2. Project-wise Access: return all projects from the database
@@ -199,7 +199,9 @@ export default function Sidebar({
     const doc = await createDocument(folderId || null, null, activeProjectId, category);
     setActiveDoc(doc.id);
     startRename(doc);
-    router.push(`/dashboard/documents/${doc.id}`);
+    const proj = projects.find(p => p.id === activeProjectId);
+    const sectionLabel = proj?.sections?.find(s => s.id === category)?.label || category;
+    router.push(pathname.startsWith('/docs') ? `/docs/${toSlug(sectionLabel)}/${toSlug(doc.title)}` : `/dashboard/documents/${doc.id}`);
   };
 
   const handleCreateFolder = async (category: ClientRole) => {
@@ -265,24 +267,24 @@ export default function Sidebar({
           isCollapsed && !isMobileOpen ? "w-20" : "w-72"
         )}
       >
-        {/* Veloc Branding Header */}
+        {/* Little Seeds Branding Header */}
         <div className="p-4 flex flex-col shrink-0 gap-3 border-b border-border/20">
           {!isCollapsed ? (
-            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-accent border border-border w-full relative">
-              <div className="w-8 h-8 bg-primary text-primary-foreground rounded-lg flex items-center justify-center shadow-lg shadow-primary/20 shrink-0 font-outfit font-black text-base">
-                V
+            <div className="flex items-center gap-3 px-1 py-1 w-full relative">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-inner bg-primary/10">
+                <span className="text-xl">{activeProject?.icon || '🌱'}</span>
               </div>
               <div className="flex flex-col min-w-0 text-left flex-1">
-                <span className="font-extrabold text-sm text-foreground font-outfit tracking-wider uppercase">Veloc</span>
-                <span className="text-[9px] text-primary font-black uppercase tracking-widest leading-none mt-0.5">Docs Portal</span>
+                <span className="font-black text-lg text-foreground tracking-tight truncate">Little Seeds</span>
+                {activeProject?.description ? (
+                  <span className="text-[10px] text-muted-foreground font-medium mt-0.5 line-clamp-2 leading-tight">
+                    {activeProject.description}
+                  </span>
+                ) : (
+                  isAdmin && <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest leading-none mt-1">Docs Admin</span>
+                )}
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <span className={cn(
-                  "text-[8px] font-black uppercase px-1.5 py-0.5 rounded-sm tracking-wide",
-                  isAdmin ? "bg-primary/10 text-primary border border-primary/20" : "bg-accent text-muted-foreground"
-                )}>
-                  {isAdmin ? 'Admin' : 'Client'}
-                </span>
                 {/* Close button — visible only on mobile */}
                 <button
                   onClick={() => setIsMobileOpen(false)}
@@ -304,32 +306,36 @@ export default function Sidebar({
         <div className="flex-1 overflow-y-auto py-4 px-3 space-y-5 scrollbar-thin">
 
           {/* Dashboard Link */}
-          <div className="space-y-1">
-            <Link href="/dashboard" onClick={() => setIsMobileOpen(false)}>
-              <div className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-lg transition-all group cursor-pointer text-xs font-bold uppercase tracking-wider",
-                pathname === '/dashboard' ? "bg-primary/10 text-primary font-extrabold" : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-              )}>
-                <LayoutDashboard className="w-4 h-4 shrink-0" />
-                {!isCollapsed && <span>Dashboard</span>}
-              </div>
-            </Link>
-          </div>
+          {isAdmin && (
+            <div className="space-y-1">
+              <Link href="/dashboard" onClick={() => setIsMobileOpen(false)}>
+                <div className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group cursor-pointer text-sm font-bold uppercase tracking-wider",
+                  pathname === '/dashboard' ? "bg-primary/10 text-primary font-extrabold" : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                )}>
+                  <LayoutDashboard className="w-4 h-4 shrink-0" />
+                  {!isCollapsed && <span>Dashboard</span>}
+                </div>
+              </Link>
+            </div>
+          )}
 
-          {/* Projects and their Created Docs underneath! */}
+          {/* Active Project Documents (Modules) */}
           <div className="space-y-4">
-            {!isCollapsed && (
-              <div className="flex items-center justify-between px-3 mb-4">
-                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
+            {!isCollapsed && !pathname.startsWith('/docs') && (
+              <div className="flex items-center justify-between px-3 mb-2">
+                <p className="text-xs font-black text-slate-500 uppercase tracking-widest">
                   Module Directories
                 </p>
                 {isAdmin && (
                   <button
                     onClick={() => {
-                      setIsCreateProjectOpen(true);
+                      const proj = activeProject || allowedProjects[0];
+                      if (proj) handleOpenSectionsConfig(proj);
+                      else setIsCreateProjectOpen(true);
                     }}
                     className="p-1 hover:bg-primary/10 bg-card border border-border shadow-xs rounded-md text-primary transition-all cursor-pointer"
-                    title="Create New Module"
+                    title="Configure Modules"
                   >
                     <Plus className="w-3.5 h-3.5" />
                   </button>
@@ -338,10 +344,19 @@ export default function Sidebar({
             )}
 
             <div className="space-y-3">
-              {allowedProjects.map(project => {
-                const isActiveProject = activeProjectId === project.id;
+              {(() => {
+                const project = activeProject || allowedProjects[0];
+                if (!project) return (
+                  <div className="px-3 py-4 text-center">
+                    <p className="text-[10px] text-muted-foreground italic">No workspace found.</p>
+                    {isAdmin && (
+                      <button onClick={() => setIsCreateProjectOpen(true)} className="mt-2 text-[10px] text-primary font-bold">
+                        Create Workspace
+                      </button>
+                    )}
+                  </div>
+                );
 
-                // Filter docs/folders of this project
                 const projDocs = documents.filter(d =>
                   d.projectId === project.id &&
                   (isAdmin ? true : d.status === 'published')
@@ -349,156 +364,18 @@ export default function Sidebar({
                 const projFolders = folders.filter(f => f.projectId === project.id);
 
                 return (
-                  <div
-                    key={project.id}
-                    className="flex flex-col relative group/module"
-                  >
-
-                    {/* Project Header Trigger */}
-                    <div
-                      onClick={() => {
-                        if (isActiveProject) {
-                          setActiveProject(null);
-                          router.push('/dashboard');
-                        } else {
-                          setActiveProject(project.id);
-                          router.push(`/dashboard/projects/${project.id}`);
-                        }
-                        setIsMobileOpen(false);
-                      }}
-                      className={cn(
-                        "group/proj w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg transition-all text-left font-bold text-xs cursor-pointer relative",
-                        isActiveProject
-                          ? "bg-primary/10 text-primary"
-                          : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                      )}
-                    >
-                      {isActiveProject && (
-                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-md"></div>
-                      )}
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <span className="text-base shrink-0 select-none drop-shadow-sm">{project.icon}</span>
-                        {!isCollapsed && (
-                          <div className="flex flex-col min-w-0 flex-1">
-                            {renamingProjectId === project.id ? (
-                              <input
-                                autoFocus
-                                value={renameProjectVal}
-                                onChange={e => setRenameProjectVal(e.target.value)}
-                                onKeyDown={e => {
-                                  if (e.key === 'Enter') {
-                                    if (renameProjectVal.trim()) {
-                                      updateProject(project.id, { name: renameProjectVal.trim() });
-                                    }
-                                    setRenamingProjectId(null);
-                                  }
-                                  if (e.key === 'Escape') {
-                                    setRenamingProjectId(null);
-                                  }
-                                }}
-                                onBlur={() => {
-                                  if (renameProjectVal.trim()) {
-                                    updateProject(project.id, { name: renameProjectVal.trim() });
-                                  }
-                                  setRenamingProjectId(null);
-                                }}
-                                onClick={e => e.stopPropagation()}
-                                className="bg-transparent border-b border-primary/50 text-[13px] font-extrabold focus:outline-none py-0.5 text-foreground min-w-0"
-                              />
-                            ) : (
-                              <span className={cn("truncate text-[13px] leading-tight transition-colors select-none", isActiveProject ? "font-extrabold" : "font-semibold")}>
-                                {project.name}
-                              </span>
-                            )}
-                            <div className="flex items-center gap-1.5 mt-0.5 select-none">
-                              <span className={cn("text-[9px] font-extrabold truncate max-w-[80px] uppercase tracking-wider", isActiveProject ? "text-primary/70" : "text-muted-foreground")} title={project.category || 'School Based'}>
-                                {project.category || 'School Based'}
-                              </span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      {!isCollapsed && (
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          {isAdmin && (
-                            <div className="relative flex items-center justify-center" onClick={e => e.stopPropagation()}>
-                              <button
-                                onClick={() => {
-                                  setOpenProjectMenuId(openProjectMenuId === project.id ? null : project.id);
-                                }}
-                                className="p-0.5 hover:bg-accent rounded-lg text-muted-foreground hover:text-foreground transition-all opacity-0 group-hover/proj:opacity-100 cursor-pointer"
-                                title="Module settings"
-                              >
-                                <MoreVertical className="w-3.5 h-3.5" />
-                              </button>
-
-                              {openProjectMenuId === project.id && (
-                                <>
-                                  <div className="fixed inset-0 z-40" onClick={() => setOpenProjectMenuId(null)} />
-                                  <div className="absolute right-0 top-full mt-1 z-50 bg-card border border-border rounded-xl shadow-2xl py-1 min-w-[150px] animate-in fade-in zoom-in-95 text-foreground">
-                                    <button
-                                      onClick={() => {
-                                        handleOpenSectionsConfig(project);
-                                        setOpenProjectMenuId(null);
-                                      }}
-                                      className="flex items-center gap-2 w-full text-left px-3 py-2 text-[10.5px] font-bold hover:bg-accent text-primary transition-all cursor-pointer border-b border-border/40 pb-2"
-                                    >
-                                      <Plus className="w-3.5 h-3.5 text-primary" /> Add/Edit Sections
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        setRenamingProjectId(project.id);
-                                        setRenameProjectVal(project.name);
-                                        setOpenProjectMenuId(null);
-                                      }}
-                                      className="flex items-center gap-2 w-full text-left px-3 py-2 text-[10.5px] font-bold hover:bg-accent text-foreground transition-all cursor-pointer mt-1"
-                                    >
-                                      <Edit3 className="w-3.5 h-3.5" /> Rename Module
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        setShareProject(project);
-                                        setOpenProjectMenuId(null);
-                                      }}
-                                      className="flex items-center gap-2 w-full text-left px-3 py-2 text-[10.5px] font-bold hover:bg-accent text-foreground transition-all cursor-pointer mt-1"
-                                    >
-                                      <Send className="w-3.5 h-3.5 text-primary" /> Share Module
-                                    </button>
-                                    <div className="border-t border-border mt-1 pt-1">
-                                      <button
-                                        onClick={() => {
-                                          deleteProject(project.id);
-                                          setOpenProjectMenuId(null);
-                                        }}
-                                        className="flex items-center gap-2 w-full text-left px-3 py-2 text-[10.5px] font-bold hover:bg-rose-500/10 text-rose-500 cursor-pointer"
-                                      >
-                                        <Trash2 className="w-3.5 h-3.5" /> Delete
-                                      </button>
-                                    </div>
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          )}
-                          <ChevronDown className={cn("w-3.5 h-3.5 text-slate-500 transition-transform select-none", !isActiveProject && "-rotate-90")} />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Active Project Documents (Expanded under Project) */}
-                    {isActiveProject && !isCollapsed && (
-                      <div className="pl-4 pr-3 pb-3 space-y-4 mt-2 border-t border-border/5 select-none animate-in fade-in duration-200">
+                  <div className="flex flex-col relative group/module">
+                    {!isCollapsed && (
+                      <div className="px-3 pb-3 space-y-4 select-none animate-in fade-in duration-200">
                         {getProjectSections(project).length === 0 && (
                           <div className="py-4 text-center px-2 border border-dashed border-border rounded-xl bg-accent/10">
-                            <p className="text-[10px] text-muted-foreground italic font-semibold leading-relaxed">No sections configured</p>
+                            <p className="text-[10px] text-muted-foreground italic font-semibold leading-relaxed">No modules configured</p>
                             {isAdmin && (
                               <button
-                                onClick={() => {
-                                  handleOpenSectionsConfig(project);
-                                }}
+                                onClick={() => handleOpenSectionsConfig(project)}
                                 className="mt-2 text-[9px] font-black uppercase tracking-wider text-primary hover:text-primary/80 transition-colors flex items-center justify-center gap-1 mx-auto cursor-pointer"
                               >
-                                <Plus className="w-3 h-3" /> Configure Custom Sections
+                                <Plus className="w-3 h-3" /> Add Module
                               </button>
                             )}
                           </div>
@@ -531,7 +408,6 @@ export default function Sidebar({
                           const catFolders = projFolders.filter(f => f.parentId === `f_${role}_${project.id}` || f.id === `f_${role}_${project.id}`);
                           const rootFolders = catFolders.filter(f => !f.parentId || f.id === `f_${role}_${project.id}`);
                           const unfiled = catDocs.filter(d => !d.folderId);
-                          const pinned = catDocs.filter(d => d.isPinned);
 
                           return (
                             <div key={role} className="space-y-1.5 pt-2 border-b border-border/5 pb-2 last:border-0">
@@ -540,24 +416,29 @@ export default function Sidebar({
                               <div className="flex items-center justify-between group/cat">
                                 <button
                                   onClick={() => toggleCategory(role)}
-                                  className="flex items-center gap-1.5 text-left hover:text-foreground transition-colors"
+                                  className="flex items-center gap-2 text-left hover:text-foreground transition-colors"
                                 >
                                   {isCatCollapsed ? (
-                                    <ChevronRight className="w-3 h-3 text-muted-foreground" />
+                                    <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
                                   ) : (
-                                    <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                                    <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
                                   )}
-                                  <Icon className={cn("w-3.5 h-3.5 shrink-0", meta.color)} />
-                                  <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground font-outfit">
+                                  <Icon className={cn("w-5 h-5 shrink-0", meta.color)} />
+                                  <span className="text-xs font-black uppercase tracking-wider text-muted-foreground font-outfit mt-px">
                                     {meta.label}
                                   </span>
                                 </button>
 
-                                {/* Inline creators ONLY for Veloc Admin */}
+                                {/* Inline creators ONLY for Little Seeds Admin */}
                                 {isAdmin && (
                                   <div className="flex items-center gap-1 opacity-0 group-hover/cat:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
                                     <button
-                                      onClick={() => handleNewDoc(role)}
+                                      onClick={() => {
+                                        if (project.id !== activeProjectId) {
+                                          setActiveProject(project.id);
+                                        }
+                                        handleNewDoc(role);
+                                      }}
                                       className="p-0.5 hover:bg-accent rounded text-primary transition-all cursor-pointer"
                                       title="Add manual"
                                     >
@@ -622,7 +503,7 @@ export default function Sidebar({
                                         }}
                                         onBlur={() => handleCreateFolder(role)}
                                         placeholder="Folder name..."
-                                        className="w-full bg-accent border border-border rounded-lg px-2 py-0.5 text-[10px] font-semibold focus:outline-none text-foreground"
+                                        className="w-full bg-accent border border-border rounded-lg px-2 py-1 text-xs font-semibold focus:outline-none text-foreground"
                                       />
                                     </div>
                                   )}
@@ -645,7 +526,7 @@ export default function Sidebar({
                                               deleteDocument={deleteDocument} togglePin={togglePin}
                                               toggleFavorite={toggleFavorite} handleSelect={() => {
                                                 setActiveDoc(doc.id);
-                                                router.push(`/dashboard/documents/${doc.id}`);
+                                                router.push(pathname.startsWith('/docs') ? `/docs/${toSlug(meta.label)}/${toSlug(doc.title)}` : `/dashboard/documents/${doc.id}`);
                                               }}
                                               handleNewSubDoc={() => handleNewDoc(role, doc.id)}
                                             />
@@ -667,12 +548,12 @@ export default function Sidebar({
                                                 if (e.key === 'Escape') setRenamingFolderId(null);
                                               }}
                                               onBlur={commitFolderRename}
-                                              className="w-full bg-background border border-border rounded-md px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider focus:outline-none text-foreground mr-2"
+                                              className="w-full bg-background border border-border rounded-md px-1.5 py-0.5 text-xs font-black uppercase tracking-wider focus:outline-none text-foreground mr-2"
                                             />
                                           ) : (
                                             <h4
                                               onDoubleClick={() => isAdmin && startFolderRename(folder.id, folder.name)}
-                                              className="text-[9px] font-black text-muted-foreground uppercase tracking-wider flex-1 truncate cursor-pointer hover:text-foreground"
+                                              className="text-xs font-black text-muted-foreground uppercase tracking-wider flex-1 truncate cursor-pointer hover:text-foreground"
                                             >
                                               {folder.name}
                                             </h4>
@@ -706,7 +587,7 @@ export default function Sidebar({
                                             deleteDocument={deleteDocument} togglePin={togglePin}
                                             toggleFavorite={toggleFavorite} handleSelect={() => {
                                               setActiveDoc(doc.id);
-                                              router.push(`/dashboard/documents/${doc.id}`);
+                                              router.push(pathname.startsWith('/docs') ? `/docs/${toSlug(meta.label)}/${toSlug(doc.title)}` : `/dashboard/documents/${doc.id}`);
                                             }}
                                             handleNewSubDoc={() => handleNewDoc(role, doc.id)}
                                           />
@@ -726,7 +607,7 @@ export default function Sidebar({
                                       deleteDocument={deleteDocument} togglePin={togglePin}
                                       toggleFavorite={toggleFavorite} handleSelect={() => {
                                         setActiveDoc(doc.id);
-                                        router.push(`/dashboard/documents/${doc.id}`);
+                                        router.push(pathname.startsWith('/docs') ? `/docs/${toSlug(meta.label)}/${toSlug(doc.title)}` : `/dashboard/documents/${doc.id}`);
                                       }}
                                       handleNewSubDoc={() => handleNewDoc(role, doc.id)}
                                     />
@@ -735,13 +616,18 @@ export default function Sidebar({
                                   {/* Empty state notice */}
                                   {unfiled.length === 0 && rootFolders.length === 0 && (
                                     <div className="pl-3 py-2 text-left select-none animate-in fade-in duration-200">
-                                      <p className="text-[10px] text-muted-foreground italic font-semibold">No manuals created yet</p>
+                                      <p className="text-xs text-muted-foreground italic font-semibold">No manuals created yet</p>
                                       {isAdmin && (
                                         <button
-                                          onClick={() => handleNewDoc(role)}
-                                          className="mt-1 text-[9px] font-black uppercase tracking-wider text-primary hover:text-primary/80 transition-colors flex items-center gap-1 cursor-pointer"
+                                          onClick={() => {
+                                            if (project.id !== activeProjectId) {
+                                              setActiveProject(project.id);
+                                            }
+                                            handleNewDoc(role);
+                                          }}
+                                          className="mt-1 text-[11px] font-black uppercase tracking-wider text-primary hover:text-primary/80 transition-colors flex items-center gap-1 cursor-pointer"
                                         >
-                                          <Plus className="w-2.5 h-2.5" /> Create First Manual
+                                          <Plus className="w-3 h-3" /> Create First Manual
                                         </button>
                                       )}
                                     </div>
@@ -754,10 +640,9 @@ export default function Sidebar({
                         })}
                       </div>
                     )}
-
                   </div>
                 );
-              })}
+              })()}
             </div>
           </div>
 
@@ -777,9 +662,9 @@ export default function Sidebar({
               </Avatar>
               {!isCollapsed && (
                 <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-bold truncate text-foreground leading-none">{user?.name}</p>
-                  <p className="text-[8px] text-muted-foreground truncate uppercase font-black tracking-widest mt-1">
-                    {isAdmin ? 'Veloc Admin' : 'Client Reader'}
+                  <p className="text-sm font-bold truncate text-foreground leading-none">{user?.name}</p>
+                  <p className="text-[10px] text-muted-foreground truncate uppercase font-black tracking-widest mt-1.5">
+                    {isAdmin ? 'Little Seeds Admin' : 'Client Reader'}
                   </p>
                 </div>
               )}
@@ -789,18 +674,7 @@ export default function Sidebar({
                 </div>
               )}
             </div>
-          ) : (
-            <Button
-              onClick={() => router.push('/login')}
-              className={cn(
-                "w-full bg-primary hover:bg-primary/95 text-primary-foreground font-black text-[10px] uppercase tracking-wider rounded-xl py-2 flex items-center justify-center gap-2 h-9 cursor-pointer",
-                isCollapsed && "px-0"
-              )}
-            >
-              <Lock className="w-3.5 h-3.5 shrink-0" />
-              {!isCollapsed && <span>Admin Sign In</span>}
-            </Button>
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -1034,6 +908,7 @@ function DocLinkItem({
   handleSelect, handleNewSubDoc, level = 0
 }: DocLinkProps) {
   const [showMenu, setShowMenu] = useState(false);
+  const pathname = usePathname() || '';
   const active = doc.id === activeDocId;
   const isRenaming = renamingId === doc.id;
 
@@ -1046,10 +921,10 @@ function DocLinkItem({
     <div className="space-y-0.5 mt-0.5">
       <div
         className={cn(
-          'group flex items-center justify-between py-1 px-2.5 rounded-lg text-[10px] font-semibold transition-all cursor-pointer relative',
+          'group flex items-center justify-between py-1.5 px-2.5 rounded-lg text-sm font-semibold transition-all cursor-pointer relative',
           active
-            ? `bg-primary/10 text-primary font-bold`
-            : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent'
+            ? `${pathname.startsWith('/docs') ? 'text-primary font-bold' : 'bg-primary/10 text-primary font-bold'}`
+            : `text-sidebar-foreground/60 hover:text-sidebar-foreground ${pathname.startsWith('/docs') ? '' : 'hover:bg-sidebar-accent'}`
         )}
         style={{ paddingLeft: `${10 + level * 12}px` }}
         onClick={handleSelect}
@@ -1062,10 +937,10 @@ function DocLinkItem({
             onKeyDown={e => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') commitRename(); }}
             onBlur={commitRename}
             onClick={e => e.stopPropagation()}
-            className="flex-1 bg-transparent border-b border-primary/50 text-[10px] font-bold focus:outline-none min-w-0 py-0.5 text-foreground"
+            className="flex-1 bg-transparent border-b border-primary/50 text-sm font-bold focus:outline-none min-w-0 py-0.5 text-foreground"
           />
         ) : (
-          <span className="flex-1 truncate select-none text-[10.5px]">{doc.title}</span>
+          <span className="flex-1 truncate select-none text-sm">{doc.title}</span>
         )}
 
         {!isRenaming && isAdmin && (

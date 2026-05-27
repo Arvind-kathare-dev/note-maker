@@ -207,7 +207,7 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
         isPinned: false,
         isFavorite: false,
         wordCount: 0,
-        authorName: 'Veloc Support',
+        authorName: 'Little Seeds Support',
         authorAvatar: 'https://i.pravatar.cc/150?u=1',
         version: 1
       });

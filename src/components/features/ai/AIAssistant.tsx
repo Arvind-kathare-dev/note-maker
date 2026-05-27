@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 export default function AIAssistant() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { role: 'assistant', content: 'Hi! I am your Veloc AI assistant. How can I help you with your documentation today?' }
+    { role: 'assistant', content: 'Hi! I am your Little Seeds AI assistant. How can I help you with your documentation today?' }
   ]);
   const [input, setInput] = useState('');
 
@@ -56,7 +56,7 @@ export default function AIAssistant() {
                   <Bot className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-white text-sm">Veloc AI</h3>
+                  <h3 className="font-bold text-white text-sm">Little Seeds AI</h3>
                   <p className="text-[10px] text-white/60">Always active • GPT-4o</p>
                 </div>
               </div>

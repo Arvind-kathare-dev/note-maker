@@ -199,7 +199,7 @@ export default function ClientPortalLayout({ children }: { children: React.React
         {/* Top Bar */}
         <header className="h-14 border-b border-border bg-card/80 backdrop-blur-xl sticky top-0 z-30 px-3 sm:px-5 flex items-center justify-between shrink-0 gap-3">
 
-          {/* Left: Hamburger (mobile) + Veloc Portal brand */}
+          {/* Left: Hamburger (mobile) + Little Seeds Portal brand */}
           <div className="flex items-center gap-2.5 shrink-0">
             {/* Mobile hamburger */}
             <button
@@ -209,10 +209,10 @@ export default function ClientPortalLayout({ children }: { children: React.React
               {sidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
             </button>
 
-            {/* Veloc Portal brand */}
+            {/* Little Seeds Portal brand */}
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 bg-primary text-primary-foreground rounded-md flex items-center justify-center font-outfit font-black text-xs shrink-0">V</div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hidden sm:block">Veloc Portal</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hidden sm:block">Little Seeds Portal</span>
             </div>
           </div>
 

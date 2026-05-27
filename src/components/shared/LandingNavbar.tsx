@@ -19,7 +19,7 @@ export default function LandingNavbar() {
             <Layout className="w-5 h-5 text-white" />
           </div>
           <div className="flex flex-col">
-            <span className="font-black text-xl tracking-tighter leading-none">Veloc</span>
+            <span className="font-black text-xl tracking-tighter leading-none">Little Seeds</span>
             <span className="text-[8px] font-black uppercase tracking-[0.3em] text-primary">Enterprise</span>
           </div>
         </Link>
@@ -28,7 +28,7 @@ export default function LandingNavbar() {
           <Link href="#features" className="hover:text-primary transition-colors">Capabilities</Link>
           <Link href="#solutions" className="hover:text-primary transition-colors">Solutions</Link>
           <Link href="#pricing" className="hover:text-primary transition-colors">Access</Link>
-          <Link href="#docs" className="hover:text-primary transition-colors">Developer Resources</Link>
+          <Link href="/docs" className="hover:text-primary transition-colors">Documentation</Link>
         </div>
 
         <div className="flex items-center gap-3">
@@ -37,7 +37,7 @@ export default function LandingNavbar() {
           </Link>
           <Link href="/register">
             <Button className="premium-gradient text-primary-foreground font-bold rounded-xl px-8 h-11 shadow-lg shadow-primary/10 border-0">
-              Join Veloc
+              Join Little Seeds
             </Button>
           </Link>
         </div>

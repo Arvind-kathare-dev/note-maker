@@ -267,7 +267,7 @@ export default function SettingsPage() {
                           type="email"
                           value={email}
                           onChange={e => setEmail(e.target.value)}
-                          placeholder="name@veloc.com"
+                          placeholder="name@littleseeds.com"
                           required
                           className="w-full h-10 pl-10 pr-4 rounded-xl border border-border bg-background text-xs font-semibold outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/10 transition-all"
                         />

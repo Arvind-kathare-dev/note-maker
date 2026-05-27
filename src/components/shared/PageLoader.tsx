@@ -20,7 +20,7 @@ interface PageLoaderProps {
  */
 export default function PageLoader({
   icon = '⚡',
-  label = 'Veloc Platform',
+  label = 'Little Seeds Platform',
   hint = 'Fetching your workspace…',
   variant = 'dashboard',
 }: PageLoaderProps) {
@@ -129,7 +129,7 @@ export default function PageLoader({
           <p
             className="text-[9px] font-black uppercase tracking-[0.25em] opacity-50"
           >
-            {variant === 'portal' ? 'Veloc Client Portal' : 'Veloc Platform'}
+            {variant === 'portal' ? 'Little Seeds Client Portal' : 'Little Seeds Platform'}
           </p>
           <h1
             className="text-xl font-black tracking-tight font-outfit uppercase"
@@ -159,7 +159,7 @@ export default function PageLoader({
           V
         </div>
         <span className="text-[9px] font-black uppercase tracking-[0.2em]">
-          Veloc Docs
+          Little Seeds Docs
         </span>
       </div>
     </div>

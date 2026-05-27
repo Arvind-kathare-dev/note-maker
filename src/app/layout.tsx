@@ -30,8 +30,8 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Veloc Note Maker | Fast, Smart & Scalable Note Platform",
-  description: "Boost productivity with Veloc Note Maker – a modern platform for notes, documentation, and knowledge management.",
+  title: "Little Seeds Note Maker | Fast, Smart & Scalable Note Platform",
+  description: "Boost productivity with Little Seeds Note Maker – a modern platform for notes, documentation, and knowledge management.",
 };
 
 export default function RootLayout({

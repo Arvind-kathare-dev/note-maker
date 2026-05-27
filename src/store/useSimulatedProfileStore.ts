@@ -13,7 +13,7 @@ export interface SimulatedProfile {
 export const simulatedProfiles: SimulatedProfile[] = [
   {
     id: 'super-admin',
-    name: 'Veloc Super Admin',
+    name: 'Little Seeds Super Admin',
     role: 'Creator & Administrator',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&h=150&q=80',
     allowedProjects: ['p1', 'p2', 'p3'],
@@ -21,8 +21,8 @@ export const simulatedProfiles: SimulatedProfile[] = [
     isWriter: true,
   },
   {
-    id: 'veloc-developer',
-    name: 'Alex (Veloc Developer)',
+    id: 'littleseeds-developer',
+    name: 'Alex (Little Seeds Developer)',
     role: 'Core Engineering Team',
     avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=150&h=150&q=80',
     allowedProjects: ['p1', 'p2', 'p3'],
