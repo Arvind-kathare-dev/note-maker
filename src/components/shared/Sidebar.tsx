@@ -30,6 +30,7 @@ import {
   AlertCircle,
   Send
 } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 import { cn, toSlug } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -109,7 +110,7 @@ export default function Sidebar({
     setConfigCustomSections(
       project.sections && project.sections.length > 0
         ? project.sections
-        : [{ id: `sec_${Math.random().toString(36).slice(2, 7)}`, label: 'New Custom Section', icon: 'BookOpen' }]
+        : [{ id: `sec_${Math.random().toString(36).slice(2, 7)}`, label: '', icon: 'BookOpen' }]
     );
     setIsSectionsConfigOpen(true);
   };
@@ -126,7 +127,7 @@ export default function Sidebar({
 
   const handleAddConfigCustomSection = () => {
     const newId = `sec_${Math.random().toString(36).slice(2, 7)}`;
-    setConfigCustomSections(prev => [...prev, { id: newId, label: 'New Custom Section', icon: 'BookOpen' }]);
+    setConfigCustomSections(prev => [...prev, { id: newId, label: '', icon: 'BookOpen' }]);
   };
 
   const handleRemoveConfigCustomSection = (id: string) => {
@@ -253,7 +254,7 @@ export default function Sidebar({
       {/* Mobile overlay backdrop */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm lg:hidden"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
@@ -261,7 +262,7 @@ export default function Sidebar({
       {/* Sidebar — single unified component: drawer on mobile, static on desktop */}
       <div
         className={cn(
-          "fixed lg:static inset-y-0 left-0 z-50 h-screen border-r border-sidebar-border bg-sidebar flex flex-col text-sidebar-foreground select-none transition-transform duration-300 ease-in-out shadow-2xl lg:shadow-none",
+          "fixed lg:static inset-y-0 left-0 z-60 h-screen border-r border-sidebar-border bg-sidebar flex flex-col text-sidebar-foreground select-none transition-transform duration-300 ease-in-out shadow-2xl lg:shadow-none",
           // Mobile: slide in/out; Desktop: always visible
           isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
           isCollapsed && !isMobileOpen ? "w-20" : "w-72"
@@ -357,9 +358,11 @@ export default function Sidebar({
                   </div>
                 );
 
+                const isPublicDocsPage = pathname.startsWith('/docs');
+
                 const projDocs = documents.filter(d =>
                   d.projectId === project.id &&
-                  (isAdmin ? true : d.status === 'published')
+                  (isAdmin && !isPublicDocsPage ? true : d.status === 'published')
                 );
                 const projFolders = folders.filter(f => f.projectId === project.id);
 
@@ -382,13 +385,8 @@ export default function Sidebar({
                         )}
                         {getProjectSections(project).map(section => {
                           const role = section.id;
-                          const Icon = section.icon === 'GraduationCap' ? GraduationCap
-                            : section.icon === 'ShieldAlert' ? ShieldAlert
-                              : section.icon === 'Backpack' ? Backpack
-                                : section.icon === 'Code2' ? Code2
-                                  : section.icon === 'Briefcase' ? Briefcase
-                                    : section.icon === 'Users2' ? Users2
-                                      : BookOpen;
+                          const IconName = (section.icon || 'BookOpen') as keyof typeof LucideIcons;
+                          const Icon = (LucideIcons[IconName] || LucideIcons.BookOpen) as React.ElementType;
 
                           const iconColor = section.id === 'teacher' ? 'text-primary'
                             : section.id === 'admin' ? 'text-purple-400'
@@ -405,6 +403,12 @@ export default function Sidebar({
                           const isCatCollapsed = collapsedCategories[role] ?? false;
 
                           const catDocs = projDocs.filter(d => d.category === role);
+                          
+                          // Hide completely on public docs page if there are no published documents
+                          if (isPublicDocsPage && catDocs.length === 0) {
+                            return null;
+                          }
+
                           const catFolders = projFolders.filter(f => f.parentId === `f_${role}_${project.id}` || f.id === `f_${role}_${project.id}`);
                           const rootFolders = catFolders.filter(f => !f.parentId || f.id === `f_${role}_${project.id}`);
                           const unfiled = catDocs.filter(d => !d.folderId);
@@ -416,7 +420,7 @@ export default function Sidebar({
                               <div className="flex items-center justify-between group/cat">
                                 <button
                                   onClick={() => toggleCategory(role)}
-                                  className="flex items-center gap-2 text-left hover:text-foreground transition-colors"
+                                  className="flex items-center gap-2 text-left hover:text-foreground transition-colors cursor-pointer"
                                 >
                                   {isCatCollapsed ? (
                                     <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
@@ -432,21 +436,24 @@ export default function Sidebar({
                                 {/* Inline creators ONLY for Little Seeds Admin */}
                                 {isAdmin && (
                                   <div className="flex items-center gap-1 opacity-0 group-hover/cat:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
-                                    <button
-                                      onClick={() => {
-                                        if (project.id !== activeProjectId) {
-                                          setActiveProject(project.id);
-                                        }
-                                        handleNewDoc(role);
-                                      }}
-                                      className="p-0.5 hover:bg-accent rounded text-primary transition-all cursor-pointer"
-                                      title="Add manual"
-                                    >
-                                      <Plus className="w-3 h-3" />
-                                    </button>
+                                    {!isPublicDocsPage && (
+                                      <button
+                                        onClick={() => {
+                                          if (project.id !== activeProjectId) {
+                                            setActiveProject(project.id);
+                                          }
+                                          handleNewDoc(role);
+                                        }}
+                                        className="p-0.5 hover:bg-accent rounded text-primary transition-all cursor-pointer"
+                                        title="Add manual"
+                                      >
+                                        <Plus className="w-3 h-3" />
+                                      </button>
+                                    )}
 
                                     {/* 3-dots menu for Section */}
-                                    <div className="relative flex items-center justify-center">
+                                    {!isPublicDocsPage && (
+                                      <div className="relative flex items-center justify-center">
                                       <button
                                         onClick={() => {
                                           setOpenSectionMenuId(openSectionMenuId === `${project.id}_${role}` ? null : `${project.id}_${role}`);
@@ -457,7 +464,7 @@ export default function Sidebar({
                                         <MoreVertical className="w-3 h-3" />
                                       </button>
 
-                                      {openSectionMenuId === `${project.id}_${role}` && (
+                                        {openSectionMenuId === `${project.id}_${role}` && (
                                         <>
                                           <div className="fixed inset-0 z-40" onClick={() => setOpenSectionMenuId(null)} />
                                           <div className="absolute right-0 top-full mt-1 z-50 bg-card border border-border rounded-xl shadow-2xl py-1 min-w-[130px] animate-in fade-in zoom-in-95 text-foreground text-left">
@@ -481,8 +488,9 @@ export default function Sidebar({
                                             </button>
                                           </div>
                                         </>
-                                      )}
-                                    </div>
+                                        )}
+                                      </div>
+                                    )}
                                   </div>
                                 )}
                               </div>
@@ -526,6 +534,7 @@ export default function Sidebar({
                                               deleteDocument={deleteDocument} togglePin={togglePin}
                                               toggleFavorite={toggleFavorite} handleSelect={() => {
                                                 setActiveDoc(doc.id);
+                                                setIsMobileOpen(false);
                                                 router.push(pathname.startsWith('/docs') ? `/docs/${toSlug(meta.label)}/${toSlug(doc.title)}` : `/dashboard/documents/${doc.id}`);
                                               }}
                                               handleNewSubDoc={() => handleNewDoc(role, doc.id)}
@@ -587,6 +596,7 @@ export default function Sidebar({
                                             deleteDocument={deleteDocument} togglePin={togglePin}
                                             toggleFavorite={toggleFavorite} handleSelect={() => {
                                               setActiveDoc(doc.id);
+                                              setIsMobileOpen(false);
                                               router.push(pathname.startsWith('/docs') ? `/docs/${toSlug(meta.label)}/${toSlug(doc.title)}` : `/dashboard/documents/${doc.id}`);
                                             }}
                                             handleNewSubDoc={() => handleNewDoc(role, doc.id)}
@@ -607,6 +617,7 @@ export default function Sidebar({
                                       deleteDocument={deleteDocument} togglePin={togglePin}
                                       toggleFavorite={toggleFavorite} handleSelect={() => {
                                         setActiveDoc(doc.id);
+                                        setIsMobileOpen(false);
                                         router.push(pathname.startsWith('/docs') ? `/docs/${toSlug(meta.label)}/${toSlug(doc.title)}` : `/dashboard/documents/${doc.id}`);
                                       }}
                                       handleNewSubDoc={() => handleNewDoc(role, doc.id)}
@@ -701,63 +712,71 @@ export default function Sidebar({
 
       {/* Sections Config Overlay Modal */}
       {isSectionsConfigOpen && selectedProjectForConfig && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 select-none animate-in fade-in duration-200">
-          <div className="bg-card border border-border rounded-3xl p-6 w-full max-w-md space-y-6 text-left shadow-2xl relative">
-            <button
-              onClick={() => {
-                setIsSectionsConfigOpen(false);
-                setSelectedProjectForConfig(null);
-              }}
-              className="absolute right-4 top-4 text-muted-foreground hover:text-foreground cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            <div className="space-y-1">
-              <h3 className="text-lg font-black text-foreground font-outfit uppercase tracking-wider">Configure Sections</h3>
-              <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Manage custom workspace sections for {selectedProjectForConfig.name}</p>
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 backdrop-blur-md p-3 sm:p-4 select-none animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-card border border-border/80 rounded-3xl w-full max-w-md max-h-[90vh] flex flex-col shadow-2xl relative overflow-hidden ring-1 ring-border/50">
+            
+            {/* Modal Header */}
+            <div className="p-5 sm:p-6 pb-2 shrink-0 relative z-10 bg-card">
+              <button
+                onClick={() => {
+                  setIsSectionsConfigOpen(false);
+                  setSelectedProjectForConfig(null);
+                }}
+                className="absolute right-4 top-4 text-muted-foreground hover:bg-accent p-1.5 rounded-full transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              <h3 className="text-xl font-black text-foreground font-outfit uppercase tracking-tight">Configure Modules</h3>
+              <p className="text-[10px] sm:text-xs text-muted-foreground font-bold uppercase tracking-widest mt-1 pr-6 leading-relaxed">
+                Manage workspace sections for <span className="text-foreground">{selectedProjectForConfig.name}</span>
+              </p>
             </div>
 
-            <form onSubmit={handleSaveConfigSections} className="space-y-5">
-
-              <div className="space-y-3 bg-accent/20 p-4 border border-border rounded-2xl max-h-[300px] overflow-y-auto scrollbar-thin">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">WORKSPACE CUSTOM SECTIONS</span>
+            {/* Modal Body */}
+            <form onSubmit={handleSaveConfigSections} className="p-5 sm:p-6 pt-3 flex flex-col gap-5 overflow-hidden">
+              
+              {/* Sections Container */}
+              <div className="bg-accent/10 border border-border rounded-2xl flex flex-col shadow-inner overflow-hidden">
+                
+                {/* Sections List Header (Sticky) */}
+                <div className="flex items-center justify-between p-3.5 sm:p-4 border-b border-border/60 bg-accent/40 shrink-0">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Custom Sections</span>
                   <button
                     type="button"
                     onClick={handleAddConfigCustomSection}
-                    className="text-[10px] font-black uppercase tracking-wider text-primary hover:text-primary/95 transition-colors flex items-center gap-1 cursor-pointer"
+                    className="text-[10px] font-black uppercase tracking-wider text-primary hover:text-primary/80 transition-colors flex items-center gap-1.5 cursor-pointer bg-primary/10 hover:bg-primary/20 px-2.5 py-1.5 rounded-lg"
                   >
-                    <Plus className="w-2.5 h-2.5" /> ADD SECTION
+                    <Plus className="w-3 h-3" /> Add Section
                   </button>
                 </div>
 
-                <div className="space-y-2">
+                {/* Sections List Scrollable Area */}
+                <div className="p-3.5 sm:p-4 overflow-y-auto scrollbar-thin space-y-3.5 max-h-[45vh] sm:max-h-[350px]">
                   {configCustomSections.map((section, idx) => (
-                    <div key={section.id} className="flex flex-col gap-2.5 bg-card border border-border p-3 rounded-2xl hover:border-primary/45 hover:shadow-lg transition-all group/item">
+                    <div key={section.id} className="flex flex-col gap-3 bg-card border border-border/80 p-3.5 rounded-xl hover:border-primary/40 shadow-xs hover:shadow-md transition-all group/item">
                       <div className="relative w-full">
                         <Select
                           value={section.icon}
                           onChange={val => handleUpdateConfigSectionIcon(section.id, val)}
                           options={getSectionIconSelectOptions()}
                           className="w-full"
-                          triggerClassName="h-10 px-3 rounded-xl"
+                          triggerClassName="h-10 px-3 rounded-lg bg-accent/30 border-border/60 hover:border-border transition-colors text-sm font-semibold"
                         />
                       </div>
 
-                      <div className="flex w-full items-center gap-2">
+                      <div className="flex w-full items-center gap-2.5">
                         <input
                           type="text"
                           required
                           value={section.label}
                           onChange={e => handleUpdateConfigSectionLabel(section.id, e.target.value)}
                           placeholder={`Section ${idx + 1} name...`}
-                          className="flex-1 min-w-0 bg-background border border-border hover:border-border/80 focus:border-primary/40 focus:bg-background rounded-xl px-3 h-10 text-xs font-bold text-foreground focus:outline-none transition-all placeholder:text-muted-foreground/45"
+                          className="flex-1 min-w-0 bg-background border border-border/80 hover:border-border focus:border-primary/40 focus:bg-background rounded-lg px-3.5 h-10 text-sm font-bold text-foreground focus:outline-none transition-all placeholder:text-muted-foreground/40 shadow-inner"
                         />
                         <button
                           type="button"
                           onClick={() => handleRemoveConfigCustomSection(section.id)}
-                          className="bg-rose-500/10 hover:bg-rose-500/20 rounded-xl text-rose-500 hover:text-rose-600 transition-colors shrink-0 cursor-pointer flex items-center justify-center h-10 w-10"
+                          className="bg-rose-500/10 hover:bg-rose-500/20 rounded-lg text-rose-500 hover:text-rose-600 transition-colors shrink-0 cursor-pointer flex items-center justify-center h-10 w-10 shadow-xs"
                           title="Remove custom section"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -765,26 +784,35 @@ export default function Sidebar({
                       </div>
                     </div>
                   ))}
+                  
+                  {/* Empty State */}
                   {configCustomSections.length === 0 && (
-                    <p className="text-[10px] text-muted-foreground italic text-center py-4 select-none">No custom sections. Click Add Section above.</p>
+                    <div className="py-8 sm:py-10 text-center bg-card rounded-xl border border-dashed border-border/60 flex flex-col items-center justify-center gap-2">
+                      <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center mb-1">
+                        <BookOpen className="w-5 h-5 text-muted-foreground" />
+                      </div>
+                      <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">No custom sections</p>
+                      <p className="text-[10px] font-bold text-muted-foreground/70">Click Add Section above to create one.</p>
+                    </div>
                   )}
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-2">
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-1 shrink-0">
                 <button
                   type="button"
                   onClick={() => {
                     setIsSectionsConfigOpen(false);
                     setSelectedProjectForConfig(null);
                   }}
-                  className="flex-1 h-11 rounded-xl border border-border text-xs font-bold hover:bg-accent transition-all cursor-pointer"
+                  className="flex-1 h-12 rounded-xl border border-border/80 text-xs font-bold text-foreground/80 hover:text-foreground hover:bg-accent transition-all cursor-pointer shadow-xs"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 h-11 bg-primary text-primary-foreground hover:bg-primary/95 rounded-xl text-xs font-black uppercase tracking-wider shadow-lg shadow-primary/10 transition-all cursor-pointer"
+                  className="flex-1 h-12 bg-primary text-primary-foreground hover:bg-primary/95 rounded-xl text-xs font-black uppercase tracking-wider shadow-lg shadow-primary/20 transition-all cursor-pointer"
                 >
                   Save Configuration
                 </button>

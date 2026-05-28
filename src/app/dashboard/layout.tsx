@@ -3,13 +3,13 @@
 import Sidebar from '@/components/shared/Sidebar';
 import { Sun, Moon, Menu } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useZenStore } from '@/store/useZenStore';
@@ -67,12 +67,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     initializeDatabaseAndStores();
   }, [isAuthenticated, router]);
 
+  useEffect(() => {
+    const handleOpenSidebar = () => setMobileSidebarOpen(true);
+    document.addEventListener('openMobileSidebar', handleOpenSidebar);
+    return () => document.removeEventListener('openMobileSidebar', handleOpenSidebar);
+  }, []);
+
   if (!dataLoaded) {
     return (
       <PageLoader
         variant="dashboard"
         icon="⚡"
-        label="Little Seeds Docs Portal"
+        label="Little Seeds Docs"
         hint="Loading your workspace"
       />
     );
@@ -81,7 +87,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
       {!isZenMode && <Sidebar mobileOpen={mobileSidebarOpen} onMobileOpenChange={setMobileSidebarOpen} />}
-      
+
       <div className="flex-1 flex flex-col min-w-0">
         {!isZenMode && (
           <header className="h-14 border-b border-border flex items-center justify-between px-4 lg:px-8 bg-card/50 backdrop-blur-md sticky top-0 z-30 gap-3">
@@ -103,7 +109,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
 
             <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-              <button 
+              <button
                 onClick={() => setMode(mode === 'dark' ? 'light' : 'dark')}
                 className="w-9 h-9 sm:w-10 sm:h-10 rounded-full hover:bg-accent flex items-center justify-center text-muted-foreground transition-all cursor-pointer"
                 title={mode === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
@@ -122,23 +128,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <DropdownMenuContent align="end" className="w-56 bg-card border-border">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator className="bg-border" />
-                  <DropdownMenuItem 
-                    onClick={() => router.push('/dashboard/settings')} 
+                  <DropdownMenuItem
+                    onClick={() => router.push('/dashboard/settings')}
                     className="cursor-pointer"
                   >
                     Profile
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => router.push('/dashboard/settings')} 
+                  <DropdownMenuItem
+                    onClick={() => router.push('/dashboard/settings')}
                     className="cursor-pointer"
                   >
                     Settings
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-border" />
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={() => {
                       logout();
-                    }} 
+                    }}
                     className="cursor-pointer text-rose-500 focus:text-rose-600 focus:bg-rose-500/10"
                   >
                     Logout

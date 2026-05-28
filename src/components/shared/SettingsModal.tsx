@@ -45,7 +45,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   ];
 
   return (
-    <div className="fixed inset-0 z-2000 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full max-w-lg bg-card border border-border shadow-2xl rounded-2xl overflow-hidden">
         <div className="p-6 border-b border-border flex items-center justify-between">

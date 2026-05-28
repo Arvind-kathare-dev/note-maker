@@ -7,7 +7,8 @@ import {
   Clock as ClockIcon, Tag,
   Printer, Check, FileText, 
   Info, BookOpen, User2, Calendar, Hash,
-  X, Compass, ShieldCheck
+  X, Compass, ShieldCheck, Menu,
+  Type, Eye
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -207,7 +208,14 @@ export default function DocumentPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const [showInfo, setShowInfo] = useState(false);
+  const [showInfo, setShowInfo] = useState(true);
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setShowInfo(false);
+    }
+  }, []);
+
   const [editorMode, setEditorMode] = useState<'rich' | 'markdown' | 'preview'>('rich');
   const [tocHeadings, setTocHeadings] = useState<TableOfContentHeading[]>([]);
   const [activeHeadingId, setActiveHeadingId] = useState<string>('');
@@ -414,10 +422,10 @@ export default function DocumentPage() {
       )}
 
       {/* Navigation Header */}
-      <header className="min-h-14 h-auto py-2.5 sm:py-0 sm:h-14 border-b border-border bg-card/90 backdrop-blur-xl sticky top-0 z-40 px-3 sm:px-4 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5">
+      <header className="min-h-14 h-auto py-2.5 sm:py-0 sm:h-14 border-b border-border bg-card/90 backdrop-blur-xl sticky top-0 z-40 px-3 sm:px-4 flex flex-nowrap overflow-x-auto [&::-webkit-scrollbar]:hidden items-center justify-between gap-4">
         
         {/* Left Side: Back & Title */}
-        <div className="flex items-center gap-3 min-w-0 flex-1">
+        <div className="flex items-center gap-1 sm:gap-3 min-w-0 shrink-0 lg:flex-1">
           <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-8 w-8 rounded-xl shrink-0 hover:bg-accent text-muted-foreground hover:text-foreground">
             <ArrowLeft className="w-4 h-4" />
           </Button>
@@ -469,39 +477,45 @@ export default function DocumentPage() {
                 size="sm"
                 onClick={() => setEditorMode('rich')}
                 className={cn(
-                  "h-7 px-2.5 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer",
+                  "h-7 lg:px-2.5 px-2 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer",
                   editorMode === 'rich'
                     ? "bg-primary text-primary-foreground font-black shadow-sm"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent"
                 )}
+                title="Rich Text"
               >
-                Rich
+                <Type className="w-3.5 h-3.5 lg:hidden" />
+                <span className="hidden lg:inline">Rich</span>
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setEditorMode('markdown')}
                 className={cn(
-                  "h-7 px-2.5 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer",
+                  "h-7 lg:px-2.5 px-2 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer",
                   editorMode === 'markdown'
                     ? "bg-primary text-primary-foreground font-black shadow-sm"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent"
                 )}
+                title="Markdown"
               >
-                Markdown
+                <Hash className="w-3.5 h-3.5 lg:hidden" />
+                <span className="hidden lg:inline">Markdown</span>
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setEditorMode('preview')}
                 className={cn(
-                  "h-7 px-2.5 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer",
+                  "h-7 lg:px-2.5 px-2 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer",
                   editorMode === 'preview'
                     ? "bg-primary text-primary-foreground font-black shadow-sm"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent"
                 )}
+                title="Preview"
               >
-                Preview
+                <Eye className="w-3.5 h-3.5 lg:hidden" />
+                <span className="hidden lg:inline">Preview</span>
               </Button>
             </div>
           )}
@@ -522,10 +536,11 @@ export default function DocumentPage() {
           <Button
             variant="outline" size="sm"
             onClick={handleDownloadPDF}
-            className="h-8 rounded-xl gap-1 sm:gap-1.5 px-2.5 sm:px-3 text-[10px] font-bold uppercase tracking-wider bg-accent border-border hover:bg-accent/80 text-foreground hover:text-foreground transition-colors"
+            className="h-8 rounded-xl gap-1 lg:gap-1.5 px-2.5 lg:px-3 text-[10px] font-bold uppercase tracking-wider bg-accent border-border hover:bg-accent/80 text-foreground hover:text-foreground transition-colors"
+            title="Download PDF"
           >
             <Printer className="w-3.5 h-3.5 text-muted-foreground" />
-            <span className="hidden sm:inline">Download PDF</span>
+            <span className="hidden lg:inline">Download PDF</span>
           </Button>
  
           {/* Save button (Only shown to writers) */}
@@ -534,17 +549,18 @@ export default function DocumentPage() {
               onClick={handleSave}
               size="sm"
               className={cn(
-                "h-8 rounded-xl gap-1 sm:gap-1.5 px-2.5 sm:px-3 text-[10px] font-bold uppercase tracking-wider transition-all",
+                "h-8 rounded-xl gap-1 lg:gap-1.5 px-2.5 lg:px-3 text-[10px] font-bold uppercase tracking-wider transition-all",
                 saved ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "bg-primary text-primary-foreground hover:bg-primary/95"
               )}
               disabled={saving}
+              title="Save Changes"
             >
               {saved ? (
-                <><Check className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Saved</span></>
+                <><Check className="w-3.5 h-3.5" /> <span className="hidden lg:inline">Saved</span></>
               ) : saving ? (
-                <><span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" /> <span className="hidden sm:inline">Saving…</span></>
+                <><span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" /> <span className="hidden lg:inline">Saving…</span></>
               ) : (
-                <><Save className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Save Changes</span></>
+                <><Save className="w-3.5 h-3.5" /> <span className="hidden lg:inline">Save Changes</span></>
               )}
             </Button>
           )}

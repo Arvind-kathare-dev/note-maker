@@ -7,8 +7,10 @@ import {
   Clock as ClockIcon, Tag,
   Printer, Check, FileText, 
   Info, BookOpen, User2, Calendar, Hash,
-  X, Compass, ShieldCheck
+  X, Compass, ShieldCheck, Menu,
+  Type, Eye, ChevronRight
 } from 'lucide-react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useDocumentStore, Doc } from '@/store/useDocumentStore';
@@ -201,14 +203,21 @@ interface TableOfContentHeading {
 export default function DocumentPage() {
   const { slug } = useParams() as { slug: string[] };
   const router = useRouter();
-  const { documents, updateDocument, setActiveDoc } = useDocumentStore();
+  const { documents, updateDocument, setActiveDoc, folders } = useDocumentStore();
   const { projects } = useProjectStore();
   const { user } = useAuthStore();
   
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const [showInfo, setShowInfo] = useState(false);
+  const [showInfo, setShowInfo] = useState(true);
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setShowInfo(false);
+    }
+  }, []);
+
   const [editorMode, setEditorMode] = useState<'rich' | 'markdown' | 'preview'>('rich');
   const [tocHeadings, setTocHeadings] = useState<TableOfContentHeading[]>([]);
   const [activeHeadingId, setActiveHeadingId] = useState<string>('');
@@ -411,16 +420,60 @@ export default function DocumentPage() {
 
   const statusMeta = STATUS_OPTIONS.find(s => s.value === doc.status) || STATUS_OPTIONS[0];
 
+  const getProjectSections = (proj: any) => {
+    if (proj.sections && proj.sections.length > 0) return proj.sections;
+    return [
+      { id: 'teacher', label: proj.sectionLabels?.teacher || 'Teachers Manuals' },
+      { id: 'admin', label: proj.sectionLabels?.admin || 'Admin Portal Setup' },
+      { id: 'student', label: proj.sectionLabels?.student || 'Student & Parent Guides' },
+      { id: 'developer', label: proj.sectionLabels?.developer || 'Core Developer Specs' },
+    ];
+  };
+
+  const projectSections = project ? getProjectSections(project) : [];
+
+  const orderedDocs: any[] = [];
+  if (project) {
+    const projDocs = documents.filter(d => d.projectId === project.id && (isAdmin ? true : d.status === 'published'));
+    const projFolders = folders.filter(f => f.projectId === project.id);
+
+    projectSections.forEach((section: any) => {
+      const role = section.id;
+      const catDocs = projDocs.filter(d => d.category === role);
+      const catFolders = projFolders.filter(f => f.parentId === `f_${role}_${project.id}` || f.id === `f_${role}_${project.id}`);
+      const rootFolders = catFolders.filter(f => !f.parentId || f.id === `f_${role}_${project.id}`);
+      const unfiled = catDocs.filter(d => !d.folderId);
+
+      rootFolders.forEach(folder => {
+        const folderDocs = catDocs.filter(d => d.folderId === folder.id);
+        orderedDocs.push(...folderDocs);
+      });
+
+      unfiled.filter(d => !d.parentId).forEach(d => {
+        orderedDocs.push(d);
+      });
+    });
+  }
+
+  const currentIndex = doc ? orderedDocs.findIndex(d => d.id === doc.id) : -1;
+  const prevDoc = currentIndex > 0 ? orderedDocs[currentIndex - 1] : null;
+  const nextDoc = currentIndex !== -1 && currentIndex < orderedDocs.length - 1 ? orderedDocs[currentIndex + 1] : null;
+
+  const getSectionLabel = (categoryId: string) => {
+    const sec = projectSections.find((s: any) => s.id === categoryId);
+    return sec ? sec.label : categoryId;
+  };
+
   return (
     <div className="flex-1 w-full bg-background flex flex-col min-h-full font-inter text-foreground">
       
       {/* Guest Mode Alert Banner Removed for public users */}
 
       {/* Navigation Header */}
-      <header className="min-h-14 h-auto py-2.5 sm:py-0 sm:h-14 border-b border-border bg-card/90 backdrop-blur-xl sticky top-0 z-40 px-3 sm:px-4 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5">
+      <header className="min-h-14 h-auto py-2.5 sm:py-0 sm:h-14 border-b border-border bg-card/90 backdrop-blur-xl sticky top-0 z-40 px-3 sm:px-4 flex flex-nowrap overflow-x-auto [&::-webkit-scrollbar]:hidden items-center justify-between gap-4">
         
         {/* Left Side: Back & Title */}
-        <div className="flex items-center gap-3 min-w-0 flex-1">
+        <div className="flex items-center gap-1 sm:gap-3 min-w-0 shrink-0 lg:flex-1">
           <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-8 w-8 rounded-xl shrink-0 hover:bg-accent text-muted-foreground hover:text-foreground">
             <ArrowLeft className="w-4 h-4" />
           </Button>
@@ -454,39 +507,45 @@ export default function DocumentPage() {
                 size="sm"
                 onClick={() => setEditorMode('rich')}
                 className={cn(
-                  "h-7 px-2.5 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer",
+                  "h-7 lg:px-2.5 px-2 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer",
                   editorMode === 'rich'
                     ? "bg-primary text-primary-foreground font-black shadow-sm"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent"
                 )}
+                title="Rich Text"
               >
-                Rich
+                <Type className="w-3.5 h-3.5 lg:hidden" />
+                <span className="hidden lg:inline">Rich</span>
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setEditorMode('markdown')}
                 className={cn(
-                  "h-7 px-2.5 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer",
+                  "h-7 lg:px-2.5 px-2 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer",
                   editorMode === 'markdown'
                     ? "bg-primary text-primary-foreground font-black shadow-sm"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent"
                 )}
+                title="Markdown"
               >
-                Markdown
+                <Hash className="w-3.5 h-3.5 lg:hidden" />
+                <span className="hidden lg:inline">Markdown</span>
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setEditorMode('preview')}
                 className={cn(
-                  "h-7 px-2.5 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer",
+                  "h-7 lg:px-2.5 px-2 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer",
                   editorMode === 'preview'
                     ? "bg-primary text-primary-foreground font-black shadow-sm"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent"
                 )}
+                title="Preview"
               >
-                Preview
+                <Eye className="w-3.5 h-3.5 lg:hidden" />
+                <span className="hidden lg:inline">Preview</span>
               </Button>
             </div>
           )}
@@ -509,17 +568,18 @@ export default function DocumentPage() {
               onClick={handleSave}
               size="sm"
               className={cn(
-                "h-8 rounded-xl gap-1 sm:gap-1.5 px-2.5 sm:px-3 text-[10px] font-bold uppercase tracking-wider transition-all",
+                "h-8 rounded-xl gap-1 lg:gap-1.5 px-2.5 lg:px-3 text-[10px] font-bold uppercase tracking-wider transition-all",
                 saved ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "bg-primary text-primary-foreground hover:bg-primary/95"
               )}
               disabled={saving}
+              title="Save Changes"
             >
               {saved ? (
-                <><Check className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Saved</span></>
+                <><Check className="w-3.5 h-3.5" /> <span className="hidden lg:inline">Saved</span></>
               ) : saving ? (
-                <><span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" /> <span className="hidden sm:inline">Saving…</span></>
+                <><span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" /> <span className="hidden lg:inline">Saving…</span></>
               ) : (
-                <><Save className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Save Changes</span></>
+                <><Save className="w-3.5 h-3.5" /> <span className="hidden lg:inline">Save Changes</span></>
               )}
             </Button>
           )}
@@ -561,6 +621,31 @@ export default function DocumentPage() {
               />
             </div>
             
+            {/* Next / Previous Navigation */}
+            {(prevDoc || nextDoc) && (
+              <div className="pt-10 border-t border-border/20 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {prevDoc ? (
+                  <Link href={`/docs/${toSlug(getSectionLabel(prevDoc.category))}/${toSlug(prevDoc.title)}`} className="flex flex-col gap-1 p-4 rounded-2xl border border-border bg-card/50 hover:bg-accent hover:border-primary/50 transition-all text-left group">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-primary transition-colors">Previous</span>
+                    <span className="text-sm font-bold text-foreground flex items-center gap-2">
+                      <ArrowLeft className="w-4 h-4 text-muted-foreground group-hover:-translate-x-1 transition-transform shrink-0" />
+                      <span className="truncate">{prevDoc.emoji || '📄'} {prevDoc.title}</span>
+                    </span>
+                  </Link>
+                ) : <div />}
+                
+                {nextDoc ? (
+                  <Link href={`/docs/${toSlug(getSectionLabel(nextDoc.category))}/${toSlug(nextDoc.title)}`} className="flex flex-col gap-1 p-4 rounded-2xl border border-border bg-card/50 hover:bg-accent hover:border-primary/50 transition-all text-right group">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-primary transition-colors">Next</span>
+                    <span className="text-sm font-bold text-foreground flex items-center justify-end gap-2">
+                      <span className="truncate">{nextDoc.emoji || '📄'} {nextDoc.title}</span>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform shrink-0" />
+                    </span>
+                  </Link>
+                ) : <div />}
+              </div>
+            )}
+
             {/* Bottom Footer */}
             <div className="pt-8 border-t border-border/20 flex items-center justify-center text-xs text-muted-foreground font-bold">
               <div className="flex items-center gap-1">

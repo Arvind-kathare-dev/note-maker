@@ -112,7 +112,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-2000 flex items-center justify-center p-4 select-none animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 select-none animate-in fade-in duration-200">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" onClick={onClose} />
       <div className="relative w-full max-w-xl bg-card border border-border shadow-2xl rounded-3xl overflow-hidden text-foreground">
         

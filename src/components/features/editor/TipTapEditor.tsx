@@ -449,8 +449,8 @@ export default function TipTapEditor({ content, onChange, editable = true, place
       )}
 
       {editable && activeMode === 'rich' && (
-        <div className="hidden sm:flex sticky top-6 z-20 justify-center w-full pointer-events-none transition-all mb-8">
-          <div className="pointer-events-auto max-w-full px-4">
+        <div className="flex sticky top-2 sm:top-6 z-20 justify-center w-full pointer-events-none transition-all mb-4 sm:mb-8">
+          <div className="pointer-events-auto max-w-full px-2 sm:px-4 w-full sm:w-auto">
             <EditorToolbar editor={editor} />
           </div>
         </div>

@@ -16,7 +16,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [focused, setFocused] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  
+
   const { login, isLoading, isAuthenticated } = useAuthStore();
   const { setActiveProject } = useProjectStore();
   const { setActiveDoc, documents } = useDocumentStore();
@@ -103,25 +103,25 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-[#030712] font-inter text-slate-300">
-      
+    <div className="min-h-screen flex bg-background font-inter text-muted-foreground">
+
       {/* Left panel (Little Seeds Branding & Value Pillars) */}
       <div className="hidden lg:flex lg:w-1/2 xl:w-[50%] relative flex-col items-center justify-center p-16 overflow-hidden border-r border-border/20">
-        <div className="absolute inset-0 bg-linear-to-br from-emerald-950/20 via-[#030712] to-[#030712]" />
-        <div className="absolute top-[-15%] left-[-15%] w-[55%] h-[55%] bg-emerald-500/10 rounded-full blur-[100px]" />
+        <div className="absolute inset-0 bg-linear-to-br from-primary/10 via-background to-background" />
+        <div className="absolute top-[-15%] left-[-15%] w-[55%] h-[55%] bg-primary/10 rounded-full blur-[100px]" />
 
         <div className="relative z-10 max-w-md text-center space-y-8">
           <div className="flex justify-center">
-            <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/25 rounded-2xl flex items-center justify-center shadow-2xl shadow-emerald-500/10 font-outfit font-black text-3xl text-emerald-400">
-              V
+            <div className="w-16 h-16 bg-primary/10 border border-primary/25 rounded-2xl flex items-center justify-center shadow-2xl shadow-primary/10 font-outfit font-black text-3xl text-primary">
+              LS
             </div>
           </div>
 
           <div className="space-y-2">
-            <h1 className="text-3xl font-extrabold tracking-wider text-slate-100 font-outfit uppercase">
+            <h1 className="text-3xl font-extrabold tracking-wider text-foreground font-outfit uppercase">
               Little Seeds Portal
             </h1>
-            <p className="text-slate-400 text-xs font-bold leading-relaxed max-w-xs mx-auto">
+            <p className="text-muted-foreground text-xs font-bold leading-relaxed max-w-xs mx-auto">
               Systematic project documentation manuals for developers, admin teams, and client viewers.
             </p>
           </div>
@@ -132,40 +132,40 @@ export default function LoginPage() {
               { emoji: '🔑', title: 'Admin Documentation Manager', desc: 'Log in as Little Seeds Admin to easily create, edit, rename or delete document structures.' },
               { emoji: '📖', title: 'Client Project Portal', desc: 'Clients get dedicated access to their project docs with a clean, focused reading experience.' },
             ].map(f => (
-              <div key={f.title} className="flex items-start gap-4 p-4 rounded-2xl bg-[#0b1220]/60 border border-border/30 backdrop-blur-xs">
+              <div key={f.title} className="flex items-start gap-4 p-4 rounded-2xl bg-card border border-border/50 backdrop-blur-xs">
                 <span className="text-xl shrink-0">{f.emoji}</span>
                 <div>
-                  <p className="text-[10px] font-black text-slate-200 uppercase tracking-wide">{f.title}</p>
-                  <p className="text-xs text-slate-400 mt-1 leading-relaxed font-medium">{f.desc}</p>
+                  <p className="text-[10px] font-black text-foreground uppercase tracking-wide">{f.title}</p>
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed font-medium">{f.desc}</p>
                 </div>
               </div>
             ))}
           </div>
 
-          <p className="text-[9px] font-black uppercase tracking-widest text-slate-600">Little Seeds Portal Workspace v1.4</p>
+          <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">Little Seeds Portal Workspace v1.4</p>
         </div>
       </div>
 
       {/* Right panel (Interactive Auth Form) */}
       <div className="flex-1 flex flex-col items-center justify-center p-6 lg:p-12 relative overflow-y-auto">
         <div className="w-full max-w-md space-y-8 py-8">
-          
+
           <div className="space-y-2 text-center lg:text-left">
-            <h2 className="text-2xl font-black text-slate-100 font-outfit uppercase tracking-wider">
+            <h2 className="text-2xl font-black text-foreground font-outfit uppercase tracking-wider">
               Portal Sign In
             </h2>
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Enter your credentials to access your workspace.</p>
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Enter your credentials to access your workspace.</p>
           </div>
 
           {/* Form */}
           <form onSubmit={handleLoginSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Email Address</label>
+              <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Email Address</label>
               <div className={cn(
-                'flex items-center gap-3 h-12 px-4 rounded-xl border bg-slate-950 transition-all',
-                focused === 'email' ? 'border-emerald-500/50 ring-3 ring-emerald-500/10' : 'border-border/40'
+                'flex items-center gap-3 h-12 px-4 rounded-xl border bg-background transition-all',
+                focused === 'email' ? 'border-primary/50 ring-3 ring-primary/10' : 'border-border/50'
               )}>
-                <Mail className="w-4 h-4 text-slate-500 shrink-0" />
+                <Mail className="w-4 h-4 text-muted-foreground shrink-0" />
                 <input
                   type="email"
                   value={email}
@@ -173,19 +173,19 @@ export default function LoginPage() {
                   onFocus={() => setFocused('email')}
                   onBlur={() => setFocused(null)}
                   placeholder="name@littleseeds.com"
-                  className="flex-1 bg-transparent text-xs font-bold outline-none placeholder:text-slate-600 text-slate-100"
+                  className="flex-1 bg-transparent text-xs font-bold outline-none placeholder:text-muted-foreground/50 text-foreground"
                   required
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Password</label>
+              <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Password</label>
               <div className={cn(
-                'flex items-center gap-3 h-12 px-4 rounded-xl border bg-slate-950 transition-all',
-                focused === 'password' ? 'border-emerald-500/50 ring-3 ring-emerald-500/10' : 'border-border/40'
+                'flex items-center gap-3 h-12 px-4 rounded-xl border bg-background transition-all',
+                focused === 'password' ? 'border-primary/50 ring-3 ring-primary/10' : 'border-border/50'
               )}>
-                <Lock className="w-4 h-4 text-slate-500 shrink-0" />
+                <Lock className="w-4 h-4 text-muted-foreground shrink-0" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
@@ -193,9 +193,9 @@ export default function LoginPage() {
                   placeholder="••••••••"
                   onFocus={() => setFocused('password')}
                   onBlur={() => setFocused(null)}
-                  className="flex-1 bg-transparent text-xs font-bold outline-none placeholder:text-slate-600 text-slate-100"
+                  className="flex-1 bg-transparent text-xs font-bold outline-none placeholder:text-muted-foreground/50 text-foreground"
                 />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-slate-500 hover:text-slate-300 transition-colors">
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-muted-foreground hover:text-foreground transition-colors">
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
@@ -204,11 +204,11 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full h-12 bg-emerald-500 text-[#030712] font-black text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2.5 shadow-lg shadow-emerald-500/10 hover:bg-emerald-600 transition-all disabled:opacity-60 disabled:cursor-not-allowed mt-4 cursor-pointer"
+              className="w-full h-12 bg-primary text-primary-foreground font-black text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2.5 shadow-lg shadow-primary/10 hover:bg-primary/90 transition-all disabled:opacity-60 disabled:cursor-not-allowed mt-4 cursor-pointer"
             >
               {isLoading ? (
                 <>
-                  <span className="w-4 h-4 border-2 border-[#030712]/30 border-t-[#030712] rounded-full animate-spin" />
+                  <span className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
                   Authenticating Session…
                 </>
               ) : (
@@ -219,8 +219,8 @@ export default function LoginPage() {
 
           {/* Footer Security & Registration option */}
           <div className="space-y-4 pt-2">
-            <div className="flex items-center justify-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+            <div className="flex items-center justify-center gap-2 text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+              <ShieldCheck className="w-3.5 h-3.5 text-primary" />
               <span>Secure Cryptographic Access</span>
             </div>
           </div>

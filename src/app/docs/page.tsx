@@ -12,7 +12,7 @@ export default function DocsPage() {
   const { projects } = useProjectStore();
   const router = useRouter();
   const [isRedirecting, setIsRedirecting] = useState(true);
-  
+
   const project = projects[0];
   const publishedDocs = documents.filter(d => d.status === 'published' && (!project || d.projectId === project.id));
 
@@ -20,9 +20,9 @@ export default function DocsPage() {
     // If there are documents, redirect to the most appropriate "intro" doc
     if (publishedDocs.length > 0) {
       // Prioritize documents that look like an introduction
-      const welcomeDoc = publishedDocs.find(d => 
-        d.title.toLowerCase().includes('introduction') || 
-        d.title.toLowerCase().includes('getting started') || 
+      const welcomeDoc = publishedDocs.find(d =>
+        d.title.toLowerCase().includes('introduction') ||
+        d.title.toLowerCase().includes('getting started') ||
         d.title.toLowerCase().includes('welcome') ||
         d.title.toLowerCase().includes('overview')
       ) || publishedDocs[0]; // fallback to the first available doc
@@ -42,7 +42,7 @@ export default function DocsPage() {
       <PageLoader
         variant="dashboard"
         icon="⚡"
-        label="Little Seeds Docs Portal"
+        label="Little Seeds Docs"
         hint="Loading introduction..."
       />
     );

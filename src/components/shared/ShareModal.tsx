@@ -39,7 +39,7 @@ export default function ShareModal({ project, onClose }: { project: Project; onC
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
       <div className="bg-card border border-border w-full max-w-md rounded-3xl shadow-2xl p-6 relative animate-in fade-in zoom-in-95" onClick={e => e.stopPropagation()}>
         <button onClick={onClose} className="absolute top-4 right-4 p-2 text-muted-foreground hover:bg-accent rounded-full transition-colors">
           <X className="w-4 h-4" />
